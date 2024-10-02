@@ -31,15 +31,6 @@
 
 # ----- Step 0: Source needed packages ----- #
 
-library(rjson)
-library(blsAPI)
-library(ggplot2)
-library(dplyr)
-library(rlang)
-library(purrr)
-
-# ----- Step 1: Define series IDs pulled from API ----- #
-
 # Define series IDs for monthly and quarterly data
 series_ids_monthly <- c(
   'LNS14000036', 
@@ -98,7 +89,7 @@ process_data <- function(data, colname, interval = "monthly") {
 }
 
 # Generalized plotting function
-plot_data <- function(data, y_columns, cumulative = FALSE, title, y_limits, output_file) {
+create_plot <- function(data, y_columns, cumulative = FALSE, title, y_limits) {
   if (cumulative) {
     data <- data |> 
       mutate(across(all_of(y_columns), ~ . - first(.), .names = "{.col}_cum_diff"))
@@ -118,7 +109,7 @@ plot_data <- function(data, y_columns, cumulative = FALSE, title, y_limits, outp
     theme_minimal() +
     theme(legend.position = "bottom")
   
-  ggsave(output_file, plot = plot, width = 6.5, height = 4, units = "in")
+  return(plot)
 }
 
 # Fetch and process both monthly and quarterly data
@@ -142,19 +133,29 @@ interval_data <- function(json, interval) {
 data_monthly <- interval_data(json_monthly, "monthly")
 data_quarterly <- interval_data(json_quarterly, "quarterly")
 
-# Plot data with original titles
-plot_data(data_monthly, c("All", "White", "Black", "Hispanic", "Asian"), FALSE,
-          'UR by race, 20-24 year olds, \nnot seasonally adjusted', 
-          c(0, 35), "plot1_monthly.png")
+# Create plots but not save them yet
+fig01_monthly <- create_plot(data_monthly, c("All", "White", "Black", "Hispanic", "Asian"), FALSE,
+                             'UR by race, 20-24 year olds, \nnot seasonally adjusted', c(0, 35))
 
-plot_data(data_monthly, c("All", "White", "Black", "Hispanic", "Asian"), TRUE,
-          'Cumulative change in UR by race, \npercentage point difference from Jan 2020, \nnot seasonally adjusted, \n20-24 year olds', 
-          c(-10, 30), "plot2_monthly.png")
+fig02_monthly <- create_plot(data_monthly, c("All", "White", "Black", "Hispanic", "Asian"), TRUE,
+                             'Cumulative change in UR by race, \npercentage point difference from Jan 2020, \nnot seasonally adjusted, \n20-24 year olds', c(-10, 30))
 
-plot_data(data_quarterly, c("All", "White", "Black", "Hispanic", "Asian"), FALSE,
-          'UR by race, 20-24 year olds, \nnot seasonally adjusted', 
-          c(0, 35), "plot1_quarterly.png")
+fig01_quarterly <- create_plot(data_quarterly, c("All", "White", "Black", "Hispanic", "Asian"), FALSE,
+                               'UR by race, 20-24 year olds, \nnot seasonally adjusted', c(0, 35))
 
-plot_data(data_quarterly, c("All", "White", "Black", "Hispanic", "Asian"), TRUE,
-          'Cumulative change in UR by race, \npercentage point difference from Jan 2020, \nnot seasonally adjusted, \n20-24 year olds', 
-          c(-5, 25), "plot2_quarterly.png")
+fig02_quarterly <- create_plot(data_quarterly, c("All", "White", "Black", "Hispanic", "Asian"), TRUE,
+                               'Cumulative change in UR by race, \npercentage point difference from Jan 2020, \nnot seasonally adjusted, \n20-24 year olds', c(-5, 25))
+
+# View plots in R
+print(fig01_monthly)
+print(fig02_monthly)
+print(fig01_quarterly)
+print(fig02_quarterly)
+
+# Save plots separately after viewing
+ggsave("results/fig01-monthly.png", plot = fig01_monthly, width = 6.5, height = 4, units = "in")
+ggsave("results/fig02-monthly.png", plot = fig02_monthly, width = 6.5, height = 4, units = "in")
+ggsave("results/fig01-quarterly.png", plot = fig01_quarterly, width = 6.5, height = 4, units = "in")
+ggsave("results/fig02-quarterly.png", plot = fig02_quarterly, width = 6.5, height = 4, units = "in")
+
+
