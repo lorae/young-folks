@@ -1,3 +1,34 @@
+# plot-unemployment.R
+#
+# The purpose of this script is to plot monthly or quarterly unemployment figures 
+# by race among young adults age 20-24 using Bureau of Labor Statistics data.
+#
+# A few notes about this script
+# Firstly, it was hastily generated to produce some motivating figures. It's unclear
+# how essential these figures will be for the project, so I've avoided overly refining
+# the code since it's unclear if it's needed.
+# 
+# That said, if it is used more or needs more development, I have some ideas to 
+# improve the code.
+# 
+# - Firsly, it's not clear how much the blsAPI package is adding, particularly since
+# this script is doing the gritty work of reading the json data and parsing it in 
+# a custom way. I should look into if there's a more effective way to use this package
+# or if I should instead just define my own custom function that draws on it more 
+# straightforwardly. 
+# - related to the first point, I'm particularly concenred about metadata. There
+# must be a way to query the BLS API to get a basic description of each series. I 
+# double checked manually that each series ID matches what I say it is supposed to
+# be (which is the race and age of the group being measured), but a more automated,
+# safe way of doing this and creating column names and graph legends would be ideal.
+# - If I find that I continue to use the cumulative change function a lot, it might
+# be beneficial to code up some helper functions related to adding these cumulative
+# columns. And if it's really useful, then perhaps this function belongs in the
+# duckdata package instead.
+# - same goes for the graphing. If I end up making a lot of similar line graphs,
+# it might be worthwhile to put those functions in the duckdata package. Another
+# thing that I could do to standardize graphing would be to set custom themes.
+
 # ----- Step 0: Source needed packages ----- #
 
 library(rjson)
