@@ -22,13 +22,6 @@ payload <- list(
 response <- blsAPI(payload, 2)
 json <- fromJSON(response)
 
-## Function to process results into a dataframe
-apiDF <- function(data) {
-  df  <- data.frame(matrix(unlist(data), nrow = length(data), byrow = TRUE))
-  colnames(df) <- c("year", "period", "periodName", "value")
-  return(df)
-}
-
 ## Function to process data object into a dataframe using lapply and create a proper date column
 process_data <- function(
     data,
@@ -51,25 +44,25 @@ process_data <- function(
   return(df)
 }
 
-all <- process_data(
+all <- process_data( # LNS14000036Q
   data = json$Results$series[[1]]$data,
   colname = "All"
   )
-white <- process_data(
+white <- process_data( # LNU04000039Q
   data = json$Results$series[[2]]$data,
   colname = "White"
 )
 black <- process_data(
   data = json$Results$series[[3]]$data,
-  colname = "Black"
+  colname = "Black" # LNU04000042Q
 )
 hispanic <- process_data(
   data = json$Results$series[[4]]$data,
-  colname = "Hispanic"
+  colname = "Hispanic" # LNU04000045Q
 )
 asian <- process_data(
   data = json$Results$series[[5]]$data,
-  colname = "Asian"
+  colname = "Asian" # LNU04032248
 )
 
 ## Merge the data into a single dataframe for plotting
@@ -92,14 +85,14 @@ plot1 <- ggplot(data, aes(x = date)) +
   geom_line(aes(y = Hispanic, color = "Hispanic or Latino")) +
   geom_line(aes(y = Asian, color = "Asian")) +
   labs(y = 'Unemployment Rate (%)', x = 'Date', 
-       title = 'Unemployment Rates by Group (2020-2024)',
+       title = 'UR by race, 20-24 year olds, \nnot seasonally adjusted',
        color = 'Group') +
   scale_y_continuous(limits = c(0, 35)) +  # Adjust y-axis limits as needed
   theme_minimal() +
   theme(legend.position = "bottom")
 
 ## Save Plot 1
-ggsave("unemployment_rates.png", plot = plot1, width = 6.5, height = 4, units = "in")
+ggsave("plot1.png", plot = plot1, width = 6.5, height = 4, units = "in")
 
 ## Plot 2: Cumulative change in unemployment rates since 2020
 plot2 <- ggplot(data, aes(x = date)) +
@@ -116,4 +109,4 @@ plot2 <- ggplot(data, aes(x = date)) +
   theme(legend.position = "bottom")
 
 ## Save Plot 2
-ggsave("cumulative_change_unemployment.png", plot = plot2, width = 6.5, height = 4, units = "in")
+ggsave("plot2.png", plot = plot2, width = 6.5, height = 4, units = "in")
