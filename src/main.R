@@ -2,10 +2,16 @@ library(rjson)
 library(blsAPI)
 library(ggplot2)
 library(dplyr)
+library(rlang)
+library(purrr)
 
-
-## Updated series IDs for monthly data (removed 'Q' for monthly data)
-series_ids <- c('LNS14000036', 'LNU04000039', 'LNU04000042', 'LNU04000045', 'LNU04032248')
+series_ids <- c(
+  'LNS14000036', 
+  'LNU04000039', 
+  'LNU04000042', 
+  'LNU04000045', 
+  'LNU04032248'
+  )
 
 ## Pull the data via the API for 2020 to 2024
 payload <- list(
@@ -23,48 +29,91 @@ apiDF <- function(data) {
   return(df)
 }
 
-## Extract data for each series
-unemployed.df_20_24 <- apiDF(json$Results$series[[1]]$data)
-white.df <- apiDF(json$Results$series[[2]]$data)
-black.df <- apiDF(json$Results$series[[3]]$data)
-hispanic.df <- apiDF(json$Results$series[[4]]$data)
-asian.df <- apiDF(json$Results$series[[5]]$data)
+## Function to process data object into a dataframe using lapply and create a proper date column
+process_data <- function(
+    data,
+    colname
+    ) {
+  year <- unlist(lapply(data, function(x) x$year))
+  period <- unlist(lapply(data, function(x) x$period))
+  periodName <- unlist(lapply(data, function(x) x$periodName))
+  value <- as.numeric(unlist(lapply(data, function(x) x$value)))
+  
+  # Create a proper date object
+  # Assuming the date is the first day of each month
+  date <- as.Date(paste0("1 ", periodName, " ", year), format = "%d %B %Y")
+  
+  # Create a dataframe with custom column name for 'value'
+  df <- tibble(value = value, date = date) |>
+    rename(!!sym(colname) := value) |> 
+    arrange(date)
+  
+  return(df)
+}
 
-## Change value type from character to numeric
-unemployed.df_20_24$value <- as.numeric(unemployed.df_20_24$value)
-white.df$value <- as.numeric(white.df$value)
-black.df$value <- as.numeric(black.df$value)
-hispanic.df$value <- as.numeric(hispanic.df$value)
-asian.df$value <- as.numeric(asian.df$value)
-
-## Filter out unreasonable values (sometimes API returns erroneous data)
-unemployed.df_20_24 <- subset(unemployed.df_20_24, value < 100)
-white.df <- subset(white.df, value < 100)
-black.df <- subset(black.df, value < 100)
-hispanic.df <- subset(hispanic.df, value < 100)
-asian.df <- subset(asian.df, value < 100)
+all <- process_data(
+  data = json$Results$series[[1]]$data,
+  colname = "All"
+  )
+white <- process_data(
+  data = json$Results$series[[2]]$data,
+  colname = "White"
+)
+black <- process_data(
+  data = json$Results$series[[3]]$data,
+  colname = "Black"
+)
+hispanic <- process_data(
+  data = json$Results$series[[4]]$data,
+  colname = "Hispanic"
+)
+asian <- process_data(
+  data = json$Results$series[[5]]$data,
+  colname = "Asian"
+)
 
 ## Merge the data into a single dataframe for plotting
-df <- data.frame(
-  date = as.POSIXct(strptime(paste0('1', unemployed.df_20_24$periodName, unemployed.df_20_24$year), '%d%B%Y')),
-  unemployment_20_24 = unemployed.df_20_24$value,
-  white = white.df$value,
-  black = black.df$value,
-  hispanic = hispanic.df$value,
-  asian = asian.df$value
-) |>
-  arrange(date)
+data <- list(all, white, black, hispanic, asian) |>
+  reduce(full_join, by = "date") |>
+  mutate(
+    All_cum_diff = All - first(All, order_by = date),
+    White_cum_diff = White - first(White, order_by = date),
+    Black_cum_diff = Black - first(Black, order_by = date),
+    Hispanic_cum_diff = Hispanic - first(Hispanic, order_by = date),
+    Asian_cum_diff = Asian - first(Asian, order_by = date)
+  )
 
-ggplot(df, aes(x = date)) +
-  geom_line(aes(y = unemployment_20_24, color = "20-24 Years")) +
-  geom_line(aes(y = white, color = "White")) +
-  geom_line(aes(y = black, color = "Black or African American")) +
-  geom_line(aes(y = hispanic, color = "Hispanic or Latino")) +
-  geom_line(aes(y = asian, color = "Asian")) +
+
+## Plot 1: Original unemployment rates
+plot1 <- ggplot(data, aes(x = date)) +
+  geom_line(aes(y = All, color = "All")) +
+  geom_line(aes(y = White, color = "White")) +
+  geom_line(aes(y = Black, color = "Black or African American")) +
+  geom_line(aes(y = Hispanic, color = "Hispanic or Latino")) +
+  geom_line(aes(y = Asian, color = "Asian")) +
   labs(y = 'Unemployment Rate (%)', x = 'Date', 
        title = 'Unemployment Rates by Group (2020-2024)',
        color = 'Group') +
-  scale_y_continuous(limits = c(0, 35)) +  # Setting y-axis limits
+  scale_y_continuous(limits = c(0, 35)) +  # Adjust y-axis limits as needed
   theme_minimal() +
-  theme(legend.position = "bottom")  # Move the legend to the bottom
+  theme(legend.position = "bottom")
 
+## Save Plot 1
+ggsave("unemployment_rates.png", plot = plot1, width = 6.5, height = 4, units = "in")
+
+## Plot 2: Cumulative change in unemployment rates since 2020
+plot2 <- ggplot(data, aes(x = date)) +
+  geom_line(aes(y = All_cum_diff, color = "All")) +
+  geom_line(aes(y = White_cum_diff, color = "White")) +
+  geom_line(aes(y = Black_cum_diff, color = "Black or African American")) +
+  geom_line(aes(y = Hispanic_cum_diff, color = "Hispanic or Latino")) +
+  geom_line(aes(y = Asian_cum_diff, color = "Asian")) +
+  labs(y = '', x = 'Date', 
+       title = 'Cumulative change in UR by race, \npercentage point difference from Jan 2020, \nnot seasonally adjusted, \n20-24 year olds',
+       color = 'Group') +
+  scale_y_continuous(limits = c(-10, 30)) +  # Adjust y-axis limits for cumulative changes
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+## Save Plot 2
+ggsave("cumulative_change_unemployment.png", plot = plot2, width = 6.5, height = 4, units = "in")
