@@ -56,8 +56,6 @@ validate_row_counts(
   step_description = "id column was added"
 )
 
-print("ID column added successfully.")
-
 # "AGE_bucketed" (using lookup table rules)
 ipums_bucketed_db <- ipums_db |>
   append_bucket_column(
@@ -78,8 +76,6 @@ validate_row_counts(
   step_description = "data were bucketed by age group"
 )
 
-print("Ages bucketed successfully.")
-
 # "HISPAN_bucketed" (using lookup table rules)
 ipums_bucketed_db <- ipums_bucketed_db |>
   append_bucket_column(
@@ -93,8 +89,6 @@ ipums_bucketed_db <- ipums_bucketed_db |>
     name = "ipums_hispan_bucketed", 
     temporary = TRUE
   )
-
-print("Ethnicity bucketed successfully.")
 
 validate_row_counts(
   db = ipums_bucketed_db,
@@ -116,8 +110,6 @@ ipums_bucketed_db <- ipums_bucketed_db |>
     temporary = TRUE
   )
 
-print("Race bucketed successfully.")
-
 validate_row_counts(
   db = ipums_bucketed_db,
   expected_count = obs_count,
@@ -133,8 +125,6 @@ ipums_bucketed_db <- ipums_bucketed_db |>
     name = "ipums_race_eth_bucketed", 
     temporary = TRUE
   )
-
-print("Ethnicity/Race coded into a single bucket successfully.")
 
 validate_row_counts(
   db = ipums_bucketed_db,
