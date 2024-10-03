@@ -26,12 +26,7 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums-raw.duckdb")
 dbWriteTable(con, "ipums", ipums_tb, overwrite = TRUE)
 DBI::dbDisconnect(con)
 
-# ----- Step 3: Save helpful reference documentation ---- #
+# ----- Step 3: Save helpful reference documentation ----- #
 
-data_dict_path <- ipums_view(ddi) # file path to HTML document
-file.copy(
-  from = data_dict_path, 
-  to = "docs/ipums-data-dictionary.html",
-  overwrite = TRUE
-  )
+ipums_view(ddi, out_file = "docs/ipums-data-dictionary.html", launch = FALSE)
 
