@@ -24,7 +24,6 @@ devtools::load_all("../dataduck")
 # Connect to the databases
 con_raw <- dbConnect(duckdb::duckdb(), "data/db/ipums-raw.duckdb")
 con_processed <- dbConnect(duckdb::duckdb(), "data/db/ipums-processed.duckdb")
-con_helpers <- dbConnect(duckdb::duckdb(), "data/db/helpers.duckdb")
 
 # Create the "ipums_raw" data in the con_processed connection. Make it temporary:
 # we'll eventually only save the processed data table in this connection.
@@ -145,4 +144,3 @@ ipums_bucketed_db <- ipums_bucketed_db |>
 
 DBI::dbDisconnect(con_raw)
 DBI::dbDisconnect(con_processed)
-DBI::dbDisconnect(con_helpers)
