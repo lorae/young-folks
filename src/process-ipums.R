@@ -132,38 +132,9 @@ validate_row_counts(
   step_description = "data were bucketed into a combined race-ethnicity column"
 )
 
-# "State" and "STATEFIP"
-
-# TODO: maybe refactor generate-cpuma-state-crosswalk to automatically save
-# this helper table into ipums-processed?
-# If so, then the ipums data talbe should be renamed to ipums-processed and the 
-# entire database should be renamed to something more generic, like "processed.duckdb"
-
-# Temporarily copy the helper into ipums-processed
-copy_to(
-  dest = con_processed, 
-  df = tbl(con_helpers, "cpuma-state-cross"), 
-  name = "cpuma-state-cross", 
-  temporary = TRUE, 
-  overwrite = TRUE
-)
-
-ipums_bucketed_state_db <- ipums_bucketed_db |>
-  left_join(tbl(con_processed, "cpuma-state-cross"), by = "CPUMA0010") |>
-  select("id", "YEAR", "CPUMA0010", "PUMA", "STATEFIP", "State", everything()) # reorder cols
-
-validate_row_counts(
-  db = ipums_bucketed_state_db,
-  expected_count = obs_count,
-  step_description = "State and STATEFIP columns were added"
-)
-
-# TODO: Add a validation step that lists any rows from the lefthand source that 
-# failed to find a match in the righthand source.
-
 # ----- Step 5: Save to the database ----- #
 
-ipums_bucketed_state_db <- ipums_bucketed_state_db |>
+ipums_bucketed_db <- ipums_bucketed_db |>
   compute(
     name = "ipums_bucketed", 
     temporary = FALSE,
