@@ -44,15 +44,28 @@ obs_count <- ipums_db |>
 
 # ----- Step 3: Add columns ----- #
 
-# "ID" 
+# "pers_id" 
 ipums_db <- ipums_db |>
-  mutate(id = paste(SAMPLE, SERIAL, PERNUM, sep = "_")) |>
+  # SAMPLE, SERIAL, and PERNUM uniquely identify each person
+  mutate(pers_id = paste(SAMPLE, SERIAL, PERNUM, sep = "_")) |>
   select(id, everything())
 
 validate_row_counts(
   db = ipums_db,
   expected_count = obs_count,
-  step_description = "id column was added"
+  step_description = "pers_id column was added"
+)
+
+# "hh_id" 
+ipums_db <- ipums_db |>
+  # SAMPLE and SERIAL uniquely identify each household
+  mutate(hh_id = paste(SAMPLE, SERIAL, sep = "_")) |>
+  select(id, everything())
+
+validate_row_counts(
+  db = ipums_db,
+  expected_count = obs_count,
+  step_description = "hh_id column was added"
 )
 
 # "AGE_bucketed" (using lookup table rules)
