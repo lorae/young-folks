@@ -4,6 +4,11 @@ library(testthat)
 library(DBI)
 library(duckdb)
 library(dplyr)
+library("rprojroot")
+
+# Make sure the working directory is correct
+root <- find_root(is_rstudio_project)
+setwd(root)
 
 # ----- Step 1: Source helper functions ----- #
 
