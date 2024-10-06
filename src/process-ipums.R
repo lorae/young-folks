@@ -9,6 +9,7 @@
 # identifier for every household in the IPUMS; the combination of SAMPLE, SERIAL, 
 # and PERNUM uniquely identifies every person in the database."
 #
+
 # ----- Step 0: Load packages ----- #
 library("dplyr")
 library("duckdb")
@@ -47,8 +48,8 @@ obs_count <- ipums_db |>
 # "pers_id" 
 ipums_db <- ipums_db |>
   # SAMPLE, SERIAL, and PERNUM uniquely identify each person
-  mutate(pers_id = paste(SAMPLE, SERIAL, PERNUM, sep = "_")) |>
-  select(id, everything())
+  mutate(pers_id = paste(SAMPLE, SERIAL, PERNUM, sep = "_"),
+         .before = YEAR)
 
 validate_row_counts(
   db = ipums_db,
@@ -59,8 +60,8 @@ validate_row_counts(
 # "hh_id" 
 ipums_db <- ipums_db |>
   # SAMPLE and SERIAL uniquely identify each household
-  mutate(hh_id = paste(SAMPLE, SERIAL, sep = "_")) |>
-  select(id, everything())
+  mutate(hh_id = paste(SAMPLE, SERIAL, sep = "_"),
+         .before = YEAR) 
 
 validate_row_counts(
   db = ipums_db,
