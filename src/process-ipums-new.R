@@ -24,19 +24,7 @@ devtools::load_all("../dataduck")
 
 # Connect to the databases
 con_raw <- dbConnect(duckdb::duckdb(), "data/db/ipums-raw.duckdb")
-con_processed <- dbConnect(duckdb::duckdb(), "data/db/ipums-processed.duckdb")
-
-# Create the "ipums_raw" data in the con_processed connection. Make it temporary:
-# we'll eventually only save the processed data table in this connection.
-copy_to(
-  dest = con_processed,
-  df = tbl(con_raw, "ipums"),
-  name = "ipums",
-  temporary = TRUE,
-  overwrite = TRUE
-)
-
-ipums_db <- tbl(con_processed, "ipums")
+ipums_db <- tbl(con_raw, "ipums")
 
 # For data validation: ensure no rows are dropped
 obs_count <- ipums_db |>
@@ -107,13 +95,13 @@ for (bucket in bucket_columns) {
   )
   
   # Execute the query to add the new column
-  dbExecute(con_processed, sql_query)
+  dbExecute(con_raw, sql_query)
   end_time <- Sys.time()
   cat("Time taken for", bucket$input_column, "bucketing: ", end_time - start_time, "\n")
   
   # Validate row count
   validate_row_counts(
-    db = tbl(con_processed, "ipums"),
+    db = tbl(con_raw, "ipums"),
     expected_count = obs_count,
     step_description = glue::glue("{bucket$input_column} bucketed column was added")
   )
@@ -124,7 +112,7 @@ start_time <- Sys.time()
 sql_query <- write_race_eth_sql_query(
   table = "ipums"
 )
-dbExecute(con_processed, sql_query)
+dbExecute(con_raw, sql_query)
 end_time <- Sys.time()
 cat("Time taken for race/ethnicity bucketing: ", end_time - start_time, "\n")
 
@@ -136,14 +124,12 @@ validate_row_counts(
 
 # ----- Step 5: Save to the database ----- #
 
-ipums_db |>
-  compute(
-    name = "ipums_bucketed",
-    temporary = FALSE,
-    overwrite = TRUE
-  )
+compute(ipums_db,
+  name = "ipums_bucketed",
+  temporary = FALSE,
+  overwrite = TRUE
+)
 
 # ----- Step 6: Clean up ----- #
 
 DBI::dbDisconnect(con_raw)
-DBI::dbDisconnect(con_processed)
