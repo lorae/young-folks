@@ -31,12 +31,12 @@ con_processed <- dbConnect(duckdb::duckdb(), "data/db/ipums-processed.duckdb")
 copy_to(
   dest = con_processed,
   df = tbl(con_raw, "ipums"),
-  name = "ipums_raw",
+  name = "ipums",
   temporary = TRUE,
   overwrite = TRUE
 )
 
-ipums_db <- tbl(con_processed, "ipums_raw")
+ipums_db <- tbl(con_processed, "ipums")
 
 # For data validation: ensure no rows are dropped
 obs_count <- ipums_db |>
@@ -103,7 +103,7 @@ for (bucket in bucket_columns) {
     range_lookup_table = range_lookup_table,
     value_lookup_table = value_lookup_table,
     col = bucket$input_column,
-    table = "ipums_raw"
+    table = "ipums"
   )
   
   # Execute the query to add the new column
@@ -113,7 +113,7 @@ for (bucket in bucket_columns) {
   
   # Validate row count
   validate_row_counts(
-    db = tbl(con_processed, "ipums_raw"),
+    db = tbl(con_processed, "ipums"),
     expected_count = obs_count,
     step_description = glue::glue("{bucket$input_column} bucketed column was added")
   )
@@ -122,7 +122,7 @@ for (bucket in bucket_columns) {
 # "RACE_ETH_bucket" (by combining entries in HISPAN_bucket and RACE_bucket)
 start_time <- Sys.time()
 sql_query <- write_race_eth_sql_query(
-  table = "ipums_raw"
+  table = "ipums"
 )
 dbExecute(con_processed, sql_query)
 end_time <- Sys.time()
@@ -136,7 +136,7 @@ validate_row_counts(
 
 # ----- Step 5: Save to the database ----- #
 
-ipums_bucketed_db <- ipums_db |>
+ipums_db |>
   compute(
     name = "ipums_bucketed",
     temporary = FALSE,
