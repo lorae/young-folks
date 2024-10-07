@@ -16,7 +16,7 @@ devtools::load_all("../dataduck")
 # ----- Step 2: Import and wrangle data ----- #
 
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con, "ipums_bucketed")
+ipums_db <- tbl(con, "ipums_processed")
 
 # ----- Step 3: Create temporary table with hh level counts ----- #
 
@@ -50,12 +50,23 @@ ipums_final <- ipums_with_counts %>%
       RELATE == 3 ~ NA_real_,
       TRUE ~ NA_real_
     )
-  )
+  ) %>%
+  select( # Remove helper columns
+    -count_RELATE_1, 
+    -count_RELATE_2, 
+    -count_RELATE_5, 
+    -count_RELATE_6
+    )
 
 # ----- Step 6: Save the computed result back to the db ----- # 
 
-compute(ipums_final,
-        name = "ipums_relationships",
-        temporary = FALSE,
-        overwrite = TRUE
+compute(
+  ipums_final,
+  name = "ipums_relationships",
+  temporary = FALSE,
+  overwrite = TRUE
 )
+
+# ----- Step 7: Close out ----- #
+
+dbDisconnect(con)
