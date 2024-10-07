@@ -120,24 +120,23 @@ for (bucket in bucket_columns) {
 }
 
 # "RACE_ETH_bucket" (by combining entries in HISPAN_bucket and RACE_bucket)
-ipums_bucketed_db <- tbl(con_processed, "ipums_raw") |>
-  race_eth_bucket(
-    data = _
-  ) |>
-  compute(
-    name = "ipums_race_eth_bucketed",
-    temporary = TRUE
-  )
+start_time <- Sys.time()
+sql_query <- write_race_eth_sql_query(
+  table = "ipums_raw"
+)
+dbExecute(con_processed, sql_query)
+end_time <- Sys.time()
+cat("Time taken for race/ethnicity bucketing: ", end_time - start_time, "\n")
 
 validate_row_counts(
-  db = ipums_bucketed_db,
+  db = ipums_db,
   expected_count = obs_count,
   step_description = "data were bucketed into a combined race-ethnicity column"
 )
 
 # ----- Step 5: Save to the database ----- #
 
-ipums_bucketed_db <- ipums_bucketed_db |>
+ipums_bucketed_db <- ipums_db |>
   compute(
     name = "ipums_bucketed",
     temporary = FALSE,
