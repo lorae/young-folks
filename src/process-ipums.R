@@ -70,18 +70,21 @@ validate_row_counts(
 )
 
 # "AGE_bucketed" (using lookup table rules)
+age_start_time <- Sys.time()
 ipums_bucketed_db <- ipums_db |>
   append_bucket_column(
     con = con_processed,
     filepath = "lookup_tables/age/age_buckets00.csv", 
     data = _, 
     input_column = "AGE", 
-    id_column = "id"
+    id_column = "pers_id"
   ) |>
   compute(
     name = "ipums_age_bucketed", 
     temporary = TRUE
   )
+age_end_time <- Sys.time()
+cat("Time taken for AGE bucketing: ", age_end_time - age_start_time, "\n")
 
 validate_row_counts(
   db = ipums_bucketed_db,
@@ -90,18 +93,21 @@ validate_row_counts(
 )
 
 # "HISPAN_bucketed" (using lookup table rules)
+hispan_start_time <- Sys.time()
 ipums_bucketed_db <- ipums_bucketed_db |>
   append_bucket_column(
     con = con_processed,
     filepath = "lookup_tables/hispan/hispan_buckets00.csv",
     data = _,
     input_column = "HISPAN",
-    id_column = "id"
+    id_column = "pers_id"
   ) |> 
   compute(
     name = "ipums_hispan_bucketed", 
     temporary = TRUE
   )
+hispan_end_time <- Sys.time()
+cat("Time taken for HISPAN bucketing: ", hispan_end_time - hispan_start_time, "\n")
 
 validate_row_counts(
   db = ipums_bucketed_db,
@@ -110,18 +116,21 @@ validate_row_counts(
 )
 
 # "RACE_bucketed" (using lookup table rules)
+race_start_time <- Sys.time()
 ipums_bucketed_db <- ipums_bucketed_db |>
   append_bucket_column(
     con = con_processed,
     filepath = "lookup_tables/race/race_buckets00.csv",
     data = _,
     input_column = "RACE",
-    id_column = "id"
+    id_column = "pers_id"
   ) |> 
   compute(
     name = "ipums_race_bucketed", 
     temporary = TRUE
   )
+race_end_time <- Sys.time()
+cat("Time taken for RACE bucketing: ", race_end_time - race_start_time, "\n")
 
 validate_row_counts(
   db = ipums_bucketed_db,
