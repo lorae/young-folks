@@ -39,7 +39,7 @@ compute(
   overwrite = TRUE
 )
 
-# ----- Step 4: Add new columns to "ipums_processed" ---- #
+# ----- Step 4: Add pers_id" and "hh_id" columns to "ipums_processed" ---- #
 
 # "pers_id" column
 dbExecute(con, "
@@ -68,7 +68,7 @@ validate_row_counts(
   step_description = "hh_id column was added"
 )
 
-# ----- Step 4: Generate and execute SQL queries for bucketed columns ----- #
+# ----- Step 5: Generate and execute SQL queries for bucketed columns ----- #
 
 # Define the list of bucket columns to be added
 bucket_columns <- list(
@@ -112,7 +112,7 @@ for (bucket in bucket_columns) {
   
   # Validate row count
   validate_row_counts(
-    db = tbl(con, "ipums"),
+    db = tbl(con, "ipums_processed"),
     expected_count = obs_count,
     step_description = glue::glue("{bucket$input_column} bucketed column was added")
   )
