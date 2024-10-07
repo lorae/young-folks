@@ -22,36 +22,48 @@ devtools::load_all("../dataduck")
 
 # ----- Step 2: Connect to the database ----- #
 
-con_raw <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
-ipums_db <- tbl(con_raw, "ipums")
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
+ipums_db <- tbl(con, "ipums")
 
 # For data validation: ensure no rows are dropped
 obs_count <- ipums_db |>
   summarise(count = n()) |>
   pull()
 
-# ----- Step 3: Add columns ----- #
+# ----- Step 3: Create a new table to write processed columns to ----- #
 
-# "pers_id"
-ipums_db <- ipums_db |>
-  # SAMPLE, SERIAL, and PERNUM uniquely identify each person
-  mutate(pers_id = paste(SAMPLE, SERIAL, PERNUM, sep = "_"),
-         .before = YEAR)
+compute(
+  tbl(con, "ipums"),
+  name = "ipums_processed",
+  temporary = FALSE,
+  overwrite = TRUE
+)
+
+# ----- Step 4: Add new columns to "ipums_processed" ---- #
+
+# "pers_id" column
+dbExecute(con, "
+  ALTER TABLE ipums_processed ADD COLUMN pers_id TEXT;
+  UPDATE ipums_processed
+  SET pers_id = SAMPLE || '_' || SERIAL || '_' || PERNUM;
+")
+
 
 validate_row_counts(
-  db = ipums_db,
+  db = tbl(con, "ipums_processed"),
   expected_count = obs_count,
   step_description = "pers_id column was added"
 )
 
-# "hh_id"
-ipums_db <- ipums_db |>
-  # SAMPLE and SERIAL uniquely identify each household
-  mutate(hh_id = paste(SAMPLE, SERIAL, sep = "_"),
-         .before = YEAR)
+# "hh_id" column
+dbExecute(con, "
+  ALTER TABLE ipums_processed ADD COLUMN hh_id TEXT;
+  UPDATE ipums_processed
+  SET hh_id = SAMPLE || '_' || SERIAL;
+")
 
 validate_row_counts(
-  db = ipums_db,
+  db = tbl(con, "ipums_processed"),
   expected_count = obs_count,
   step_description = "hh_id column was added"
 )
@@ -90,17 +102,17 @@ for (bucket in bucket_columns) {
     range_lookup_table = range_lookup_table,
     value_lookup_table = value_lookup_table,
     col = bucket$input_column,
-    table = "ipums"
+    table = "ipums_processed"
   )
   
   # Execute the query to add the new column
-  dbExecute(con_raw, sql_query)
+  dbExecute(con, sql_query)
   end_time <- Sys.time()
   cat("Time taken for", bucket$input_column, "bucketing: ", end_time - start_time, "\n")
   
   # Validate row count
   validate_row_counts(
-    db = tbl(con_raw, "ipums"),
+    db = tbl(con, "ipums"),
     expected_count = obs_count,
     step_description = glue::glue("{bucket$input_column} bucketed column was added")
   )
@@ -109,9 +121,9 @@ for (bucket in bucket_columns) {
 # "RACE_ETH_bucket" (by combining entries in HISPAN_bucket and RACE_bucket)
 start_time <- Sys.time()
 sql_query <- write_race_eth_sql_query(
-  table = "ipums"
+  table = "ipums_processed"
 )
-dbExecute(con_raw, sql_query)
+dbExecute(con, sql_query)
 end_time <- Sys.time()
 cat("Time taken for race/ethnicity bucketing: ", end_time - start_time, "\n")
 
@@ -121,14 +133,6 @@ validate_row_counts(
   step_description = "data were bucketed into a combined race-ethnicity column"
 )
 
-# ----- Step 5: Save to the database ----- #
-
-compute(ipums_db,
-        name = "ipums_bucketed",
-        temporary = FALSE,
-        overwrite = TRUE
-)
-
 # ----- Step 6: Clean up ----- #
 
-DBI::dbDisconnect(con_raw)
+DBI::dbDisconnect(con)
