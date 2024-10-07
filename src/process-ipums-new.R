@@ -20,10 +20,9 @@ library("readr")
 
 devtools::load_all("../dataduck")
 
-# ----- Step 2: Prepare the new database ----- #
+# ----- Step 2: Connect to the database ----- #
 
-# Connect to the databases
-con_raw <- dbConnect(duckdb::duckdb(), "data/db/ipums-raw.duckdb")
+con_raw <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_db <- tbl(con_raw, "ipums")
 
 # For data validation: ensure no rows are dropped
