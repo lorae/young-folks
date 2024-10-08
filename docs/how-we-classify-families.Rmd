@@ -9,31 +9,87 @@ This document outlines the methodology and logic used to produce family relation
 
 ## Classification
 
-IPUMS provides detailed information on the relationships between individuals of a single household in its `RELATE` and `RELATED` variables. The person filling out the survey is designated as "head of household" or "person 1". ("Head of household" has fallen out of use, as it used to specifically designate men. The new terminology is intended to be more gender inclusive.) This person receives the code of `101` in the `RELATED` variable. All other individuals in the same household unit are then assigned codes based on their relationship with person 1. The following table is a summary of these statuses as they appeared in the 2022 1-year American Community Survey, sorted from most frequently reported to least frequently reported. The `count` column represents the raw number of respondents with that code. The sum_weights column represents the total number of people in the United States estimated to have that status.
+IPUMS provides detailed information on the relationships between individuals of a single household in its `RELATE` and `RELATED` variables. The person filling out the survey is designated as "head of household" or "person 1". ("Head of household" has fallen out of use, as it used to specifically designate men. The new terminology is intended to be more gender inclusive.) This person receives the code of `101` in the `RELATED` variable. All other individuals in the same household unit are then assigned codes based on their relationship with person 1. The following table is a summary of these statuses as they appeared in the 2022 1-year American Community Survey, sorted from most frequently reported to least frequently reported. The `count` column represents the raw number of respondents with that code. The `sum_weights` column represents the total number of people in the United States estimated to have that status.
 
-```{r related_vars_2022, echo=FALSE}
+```{r related_vars_2022, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
 hoh_status_2022 <- read.csv("../results/hoh_status_2022.csv")
-hoh_status_2022
+kable(hoh_status_2022, caption = "2022 Head of Household Statuses")
 ```
 
-A quick data validation check can be done: Since each of these categories are non-overlapping and no respondents have `NA` answers, the sum of all the entries in the `sum_weights` column should equal the entire U.S. population in 2022. Indeed, this sum equals `sum(hoh_status_2022$sum_weights)`. A quick Google search for the U.S. population in 2022 indicates 333.3 million: our number matches exactly.
+A quick data validation check can be done: Since each of these categories are non-overlapping and no respondents have `NA` answers, the sum of all the entries in the `sum_weights` column should equal the entire U.S. population in 2022. Indeed, this sum equals `r sum(hoh_status_2022$sum_weights)`. A quick Google search for the U.S. population in 2022 indicates 333.3 million: our number matches exactly.
 
 From here on out, we'll work with the table containing all `RELATED` answers from 2012 to 2022, to ensure we don't miss any classifications that occur in earlier years. Indeed, this table has one more row than the 2022 table, indicating that there's one additional entry in the `RELATED` IPUMS variable that occurred in years prior to 2022 but not in 2022.
 
 ```{r related_vars_overall, echo=FALSE}
 hoh_status <- read.csv("../results/hoh_status.csv")
-hoh_status
+kable(hoh_status, caption = "Overall Head of Household Statuses from 2012-2022")
 ```
 
-The challenge here is to accurately identify instances where individuals live with their parents. (In subsequent work, we may also look at parents-in-law, but to keep things simple, we'll stick with parents for now). If the individual we're studying is listed as "head of household" (`RELATED = 101`), then identifying parents is fairly easy. We can simply tabulate the number of individuals in the household who have `RELATED` codes of `501` ("parent"). Here, for example, is a hypothetical household from our survey data:
+The challenge here is to accurately identify instances where individuals live with their parents. (In subsequent work, we may also be able to classify parents-in-law, but to keep things simple, we'll stick with parents for now). If the individual we're studying is listed as "person 1" / "head of household" (`RELATED = 101`), then identifying parents is fairly easy. We can simply tabulate the number of individuals in the household who have `RELATED` codes of `501` ("parent"). Here, for example, is a hypothetical household from our survey data:
 
-( create a table here where the first col is pers_id and numbers from 1 thorugh 4. the second row is hh_id and all four rows have an entry of 1. the next col is RELATED, and we'll have the codes be 101, 501, 301, 301. The next column is RELATED_name and we'll have Head of Household, Parent, Child, Child. The next column is AGE and we'll have 26, 51, 0, and 2. The next column is SEX and we'll have F, F, M, M.)
+```{r}
+hypothetical_data <- data.frame(
+  pers_id = 1:5,
+  hh_id = rep(1, 5),
+  RELATED = c(101, 501, 501, 301, 301),
+  RELATED_name = c("Head of Household", "Parent", "Parent", "Child", "Child"),
+  AGE = c(26, 51, 52, 0, 2),
+  SEX = c("F", "F", "M", "M", "M")
+)
+kable(hypothetical_data, caption = "Hypothetical Household Example")
+```
 
-This household appears fairly clear-cut. We have a single mother living with her parent and her two children, ages 0 and 2. In our `cohabit_parent` variable, we'd assign the members of the household the following keys:
+This household appears fairly clear-cut. We have a single mother living with her two parents and her two children, ages 0 and 2. In our `cohabit_parent` variable, we'd assign the members of the household the following keys:
 
-(same table as above except now there's an extra column called cohabit_parent which is 1, 0, 1, 1).
+```{r}
+hypothetical_data$cohabit_parent <- c(2, 0, 0, 1, 1)
+kable(hypothetical_data, caption = "Cohabit Parent Example")
+```
 
-What about this household, however?
+Note that this variable is designed to represent the number of parents an individual lives with, which is why the variable is encoded as `2` for our single mother and `1` for her two children. If we later prefer to splice the data as a binary indicator variable, it is simple enough to encode all positive numbers as a `1` (`True`) value and all zeroes as a `0` (`False`) value.
 
+However, American families are not always so clear-cut. What, exactly, makes a parent a "parent"? Is the spouse of your parent also a parent? 
 
+Answering questions about parenthood can also be complicated by households where the individual we're studying isn't classified as head of household. Consider this hypothetical example:
+
+```{r}
+hypothetical_data <- data.frame(
+  pers_id = 1:3,
+  hh_id = rep(2, 3),
+  RELATED = c(101, 1114, 301),
+  RELATED_name = c("Head of Household", "Unmarried Partner", "Child"),
+  AGE = c(60, 62, 20),
+  SEX = c("F", "M", "M"),
+  cohabit_parent <- c(0, 0, "1 or 2?"),
+  cohabit_parent_binary <- c("False", "False", "True")
+)
+kable(hypothetical_data, caption = "Hypothetical Household Example")
+```
+
+In this example, we're able to classify the 20-year old young adult as living with at least one parent - in this case, the head of household. Should we also count the unmarried partner as an additional parent? This question is highly contextual and unlikely to be answerable given our limited information. It also may require a judgement about what constitutes a family, which is a highly cultural question.
+
+We may breathe a sigh of relief that regardless of the answer, at least our `cohabit_parent_binary` column is unchanged: it still equals `True`, whether or not we classify the unmarried spouse of the child's mother as an additional parent. But our ability to discern this parenthood could be easily complicated if the same household had chosen to designate the unmarried spouse as "person 1" or "head of household":
+
+```{r}
+hypothetical_data <- data.frame(
+  pers_id = 1:3,
+  hh_id = rep(2, 3),
+  RELATED = c(101, 1114, "303? 1001? or 1260?"),
+  RELATED_name = c("Head of Household", "Unmarried Partner", "Stepchild? Other Relative? or Other Non-Relative?"),
+  AGE = c(62, 60, 20),
+  SEX = c("M", "F", "M"),
+  cohabit_parent <- c(0, 0, "0, 1, or 2?"),
+  cohabit_parent_binary <- c("False", "False", "False or True?")
+)
+kable(hypothetical_data, caption = "Hypothetical Household Example")
+```
+
+The above table shows the same hypothetical household: the only difference is the designated "person 1" who filled ou the survey. Because all relationships are classified through the head of household, our visibility into the relationship between two other housemates can be complicated by their relationship with the head of household. In this example, it's likely, that the 62-year-old man might list the 20-year-old son of his spouse as his stepchild. But since him and his spouse are not technically married, he also might list this son as an "Other Relative" or "Other Non-Relative". In this case, we may accidentally fail to code the son as living with a parent.
+
+These nuances cannot be eliminated. However, we can later run sensitivity analyses to various bucketing schemes to calculate the scope of our potential error.
+
+In the following section, we define our current parental cohabitation strategy.
+
+## Classifying families: the current methodology
 

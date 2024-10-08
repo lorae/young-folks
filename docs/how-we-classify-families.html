@@ -374,83 +374,602 @@ assigned codes based on their relationship with person 1. The following
 table is a summary of these statuses as they appeared in the 2022 1-year
 American Community Survey, sorted from most frequently reported to least
 frequently reported. The <code>count</code> column represents the raw
-number of respondents with that code. The sum_weights column represents
-the total number of people in the United States estimated to have that
-status.</p>
-<pre><code>##    RELATED   count sum_weights                                           lbl
-## 1      101 1323938   129871198                              Head/Householder
-## 2      301  770271    86789931                                         Child
-## 3      201  672912    60889413                                        Spouse
-## 4     1114   85166     9554851                             Unmarried Partner
-## 5      901   67038     7534724                                    Grandchild
-## 6     1115   48540     5993702                             Housemate/Roomate
-## 7     1270   96910     4544114                               Non-inmate 1990
-## 8      501   39878     4033195                                        Parent
-## 9     1001   32128     3880010                               Other Relatives
-## 10     303   34356     3835002                                     Stepchild
-## 11    1260   34717     3768626 Other non-relatives (1990 includes employees)
-## 12     701   32670     3750380                                       Sibling
-## 13    1301   84260     3608779                         Institutional inmates
-## 14     302   19726     2080709                                 Adopted Child
-## 15     401   12493     1321045                                  Child-in-law
-## 16     601   10848     1022530                                 Parent-in-Law
-## 17     801    5187      560359                                Sibling-in-Law
-## 18    1242    2340      248994                               Foster children</code></pre>
+number of respondents with that code. The <code>sum_weights</code>
+column represents the total number of people in the United States
+estimated to have that status.</p>
+<table>
+<caption>2022 Head of Household Statuses</caption>
+<colgroup>
+<col width="10%" />
+<col width="10%" />
+<col width="16%" />
+<col width="62%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">RELATED</th>
+<th align="right">count</th>
+<th align="right">sum_weights</th>
+<th align="left">lbl</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">101</td>
+<td align="right">1323938</td>
+<td align="right">129871198</td>
+<td align="left">Head/Householder</td>
+</tr>
+<tr class="even">
+<td align="right">301</td>
+<td align="right">770271</td>
+<td align="right">86789931</td>
+<td align="left">Child</td>
+</tr>
+<tr class="odd">
+<td align="right">201</td>
+<td align="right">672912</td>
+<td align="right">60889413</td>
+<td align="left">Spouse</td>
+</tr>
+<tr class="even">
+<td align="right">1114</td>
+<td align="right">85166</td>
+<td align="right">9554851</td>
+<td align="left">Unmarried Partner</td>
+</tr>
+<tr class="odd">
+<td align="right">901</td>
+<td align="right">67038</td>
+<td align="right">7534724</td>
+<td align="left">Grandchild</td>
+</tr>
+<tr class="even">
+<td align="right">1115</td>
+<td align="right">48540</td>
+<td align="right">5993702</td>
+<td align="left">Housemate/Roomate</td>
+</tr>
+<tr class="odd">
+<td align="right">1270</td>
+<td align="right">96910</td>
+<td align="right">4544114</td>
+<td align="left">Non-inmate 1990</td>
+</tr>
+<tr class="even">
+<td align="right">501</td>
+<td align="right">39878</td>
+<td align="right">4033195</td>
+<td align="left">Parent</td>
+</tr>
+<tr class="odd">
+<td align="right">1001</td>
+<td align="right">32128</td>
+<td align="right">3880010</td>
+<td align="left">Other Relatives</td>
+</tr>
+<tr class="even">
+<td align="right">303</td>
+<td align="right">34356</td>
+<td align="right">3835002</td>
+<td align="left">Stepchild</td>
+</tr>
+<tr class="odd">
+<td align="right">1260</td>
+<td align="right">34717</td>
+<td align="right">3768626</td>
+<td align="left">Other non-relatives (1990 includes employees)</td>
+</tr>
+<tr class="even">
+<td align="right">701</td>
+<td align="right">32670</td>
+<td align="right">3750380</td>
+<td align="left">Sibling</td>
+</tr>
+<tr class="odd">
+<td align="right">1301</td>
+<td align="right">84260</td>
+<td align="right">3608779</td>
+<td align="left">Institutional inmates</td>
+</tr>
+<tr class="even">
+<td align="right">302</td>
+<td align="right">19726</td>
+<td align="right">2080709</td>
+<td align="left">Adopted Child</td>
+</tr>
+<tr class="odd">
+<td align="right">401</td>
+<td align="right">12493</td>
+<td align="right">1321045</td>
+<td align="left">Child-in-law</td>
+</tr>
+<tr class="even">
+<td align="right">601</td>
+<td align="right">10848</td>
+<td align="right">1022530</td>
+<td align="left">Parent-in-Law</td>
+</tr>
+<tr class="odd">
+<td align="right">801</td>
+<td align="right">5187</td>
+<td align="right">560359</td>
+<td align="left">Sibling-in-Law</td>
+</tr>
+<tr class="even">
+<td align="right">1242</td>
+<td align="right">2340</td>
+<td align="right">248994</td>
+<td align="left">Foster children</td>
+</tr>
+</tbody>
+</table>
 <p>A quick data validation check can be done: Since each of these
 categories are non-overlapping and no respondents have <code>NA</code>
 answers, the sum of all the entries in the <code>sum_weights</code>
 column should equal the entire U.S. population in 2022. Indeed, this sum
-equals <code>sum(hoh_status_2022$sum_weights)</code>. A quick Google
-search for the U.S. population in 2022 indicates 333.3 million: our
-number matches exactly.</p>
+equals 333287562. A quick Google search for the U.S. population in 2022
+indicates 333.3 million: our number matches exactly.</p>
 <p>From here on out, we’ll work with the table containing all
 <code>RELATED</code> answers from 2012 to 2022, to ensure we don’t miss
 any classifications that occur in earlier years. Indeed, this table has
 one more row than the 2022 table, indicating that there’s one additional
 entry in the <code>RELATED</code> IPUMS variable that occurred in years
 prior to 2022 but not in 2022.</p>
-<pre><code>##    RELATED    count sum_weights                                           lbl
-## 1      101 13486551  1332791272                              Head/Householder
-## 2      301  8205290   974790563                                         Child
-## 3      201  6873939   637318470                                        Spouse
-## 4     1114   783552    86890393                             Unmarried Partner
-## 5      901   749845    85055270                                    Grandchild
-## 6     1115   451726    67926657                             Housemate/Roomate
-## 7      501   360205    47043911                                        Parent
-## 8     1270   893329    46047298                               Non-inmate 1990
-## 9     1001   335425    45748758                               Other Relatives
-## 10     701   316757    43982773                                       Sibling
-## 11    1301   831777    42427179                         Institutional inmates
-## 12    1260   341341    42363525 Other non-relatives (1990 includes employees)
-## 13     303   361917    42324647                                     Stepchild
-## 14     302   213843    23732119                                 Adopted Child
-## 15     401   125779    15914287                                  Child-in-law
-## 16    1241    86620    13357447                      Roomers/boarders/lodgers
-## 17     601    96553    11570971                                 Parent-in-Law
-## 18     801    52541     7102915                                Sibling-in-Law
-## 19    1242    26100     2870078                               Foster children</code></pre>
+<table>
+<caption>Overall Head of Household Statuses from 2012-2022</caption>
+<colgroup>
+<col width="10%" />
+<col width="12%" />
+<col width="16%" />
+<col width="61%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">RELATED</th>
+<th align="right">count</th>
+<th align="right">sum_weights</th>
+<th align="left">lbl</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">101</td>
+<td align="right">13486551</td>
+<td align="right">1332791272</td>
+<td align="left">Head/Householder</td>
+</tr>
+<tr class="even">
+<td align="right">301</td>
+<td align="right">8205290</td>
+<td align="right">974790563</td>
+<td align="left">Child</td>
+</tr>
+<tr class="odd">
+<td align="right">201</td>
+<td align="right">6873939</td>
+<td align="right">637318470</td>
+<td align="left">Spouse</td>
+</tr>
+<tr class="even">
+<td align="right">1114</td>
+<td align="right">783552</td>
+<td align="right">86890393</td>
+<td align="left">Unmarried Partner</td>
+</tr>
+<tr class="odd">
+<td align="right">901</td>
+<td align="right">749845</td>
+<td align="right">85055270</td>
+<td align="left">Grandchild</td>
+</tr>
+<tr class="even">
+<td align="right">1115</td>
+<td align="right">451726</td>
+<td align="right">67926657</td>
+<td align="left">Housemate/Roomate</td>
+</tr>
+<tr class="odd">
+<td align="right">501</td>
+<td align="right">360205</td>
+<td align="right">47043911</td>
+<td align="left">Parent</td>
+</tr>
+<tr class="even">
+<td align="right">1270</td>
+<td align="right">893329</td>
+<td align="right">46047298</td>
+<td align="left">Non-inmate 1990</td>
+</tr>
+<tr class="odd">
+<td align="right">1001</td>
+<td align="right">335425</td>
+<td align="right">45748758</td>
+<td align="left">Other Relatives</td>
+</tr>
+<tr class="even">
+<td align="right">701</td>
+<td align="right">316757</td>
+<td align="right">43982773</td>
+<td align="left">Sibling</td>
+</tr>
+<tr class="odd">
+<td align="right">1301</td>
+<td align="right">831777</td>
+<td align="right">42427179</td>
+<td align="left">Institutional inmates</td>
+</tr>
+<tr class="even">
+<td align="right">1260</td>
+<td align="right">341341</td>
+<td align="right">42363525</td>
+<td align="left">Other non-relatives (1990 includes employees)</td>
+</tr>
+<tr class="odd">
+<td align="right">303</td>
+<td align="right">361917</td>
+<td align="right">42324647</td>
+<td align="left">Stepchild</td>
+</tr>
+<tr class="even">
+<td align="right">302</td>
+<td align="right">213843</td>
+<td align="right">23732119</td>
+<td align="left">Adopted Child</td>
+</tr>
+<tr class="odd">
+<td align="right">401</td>
+<td align="right">125779</td>
+<td align="right">15914287</td>
+<td align="left">Child-in-law</td>
+</tr>
+<tr class="even">
+<td align="right">1241</td>
+<td align="right">86620</td>
+<td align="right">13357447</td>
+<td align="left">Roomers/boarders/lodgers</td>
+</tr>
+<tr class="odd">
+<td align="right">601</td>
+<td align="right">96553</td>
+<td align="right">11570971</td>
+<td align="left">Parent-in-Law</td>
+</tr>
+<tr class="even">
+<td align="right">801</td>
+<td align="right">52541</td>
+<td align="right">7102915</td>
+<td align="left">Sibling-in-Law</td>
+</tr>
+<tr class="odd">
+<td align="right">1242</td>
+<td align="right">26100</td>
+<td align="right">2870078</td>
+<td align="left">Foster children</td>
+</tr>
+</tbody>
+</table>
 <p>The challenge here is to accurately identify instances where
-individuals live with their parents. (In subsequent work, we may also
-look at parents-in-law, but to keep things simple, we’ll stick with
-parents for now). If the individual we’re studying is listed as “head of
-household” (<code>RELATED = 101</code>), then identifying parents is
-fairly easy. We can simply tabulate the number of individuals in the
-household who have <code>RELATED</code> codes of <code>501</code>
-(“parent”). Here, for example, is a hypothetical household from our
-survey data:</p>
-<p>( create a table here where the first col is pers_id and numbers from
-1 thorugh 4. the second row is hh_id and all four rows have an entry of
-1. the next col is RELATED, and we’ll have the codes be 101, 501, 301,
-301. The next column is RELATED_name and we’ll have Head of Household,
-Parent, Child, Child. The next column is AGE and we’ll have 26, 51, 0,
-and 2. The next column is SEX and we’ll have F, F, M, M.)</p>
+individuals live with their parents. (In subsequent work, we may also be
+able to classify parents-in-law, but to keep things simple, we’ll stick
+with parents for now). If the individual we’re studying is listed as
+“person 1” / “head of household” (<code>RELATED = 101</code>), then
+identifying parents is fairly easy. We can simply tabulate the number of
+individuals in the household who have <code>RELATED</code> codes of
+<code>501</code> (“parent”). Here, for example, is a hypothetical
+household from our survey data:</p>
+<pre class="r"><code>hypothetical_data &lt;- data.frame(
+  pers_id = 1:5,
+  hh_id = rep(1, 5),
+  RELATED = c(101, 501, 501, 301, 301),
+  RELATED_name = c(&quot;Head of Household&quot;, &quot;Parent&quot;, &quot;Parent&quot;, &quot;Child&quot;, &quot;Child&quot;),
+  AGE = c(26, 51, 52, 0, 2),
+  SEX = c(&quot;F&quot;, &quot;F&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;)
+)
+kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</code></pre>
+<table>
+<caption>Hypothetical Household Example</caption>
+<thead>
+<tr class="header">
+<th align="right">pers_id</th>
+<th align="right">hh_id</th>
+<th align="right">RELATED</th>
+<th align="left">RELATED_name</th>
+<th align="right">AGE</th>
+<th align="left">SEX</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">101</td>
+<td align="left">Head of Household</td>
+<td align="right">26</td>
+<td align="left">F</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="right">501</td>
+<td align="left">Parent</td>
+<td align="right">51</td>
+<td align="left">F</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">501</td>
+<td align="left">Parent</td>
+<td align="right">52</td>
+<td align="left">M</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="right">301</td>
+<td align="left">Child</td>
+<td align="right">0</td>
+<td align="left">M</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right">301</td>
+<td align="left">Child</td>
+<td align="right">2</td>
+<td align="left">M</td>
+</tr>
+</tbody>
+</table>
 <p>This household appears fairly clear-cut. We have a single mother
-living with her parent and her two children, ages 0 and 2. In our
+living with her two parents and her two children, ages 0 and 2. In our
 <code>cohabit_parent</code> variable, we’d assign the members of the
 household the following keys:</p>
-<p>(same table as above except now there’s an extra column called
-cohabit_parent which is 1, 0, 1, 1).</p>
-<p>What about this household, however?</p>
+<pre class="r"><code>hypothetical_data$cohabit_parent &lt;- c(2, 0, 0, 1, 1)
+kable(hypothetical_data, caption = &quot;Cohabit Parent Example&quot;)</code></pre>
+<table>
+<caption>Cohabit Parent Example</caption>
+<thead>
+<tr class="header">
+<th align="right">pers_id</th>
+<th align="right">hh_id</th>
+<th align="right">RELATED</th>
+<th align="left">RELATED_name</th>
+<th align="right">AGE</th>
+<th align="left">SEX</th>
+<th align="right">cohabit_parent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">101</td>
+<td align="left">Head of Household</td>
+<td align="right">26</td>
+<td align="left">F</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="right">501</td>
+<td align="left">Parent</td>
+<td align="right">51</td>
+<td align="left">F</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">501</td>
+<td align="left">Parent</td>
+<td align="right">52</td>
+<td align="left">M</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="right">301</td>
+<td align="left">Child</td>
+<td align="right">0</td>
+<td align="left">M</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right">301</td>
+<td align="left">Child</td>
+<td align="right">2</td>
+<td align="left">M</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+<p>Note that this variable is designed to represent the number of
+parents an individual lives with, which is why the variable is encoded
+as <code>2</code> for our single mother and <code>1</code> for her two
+children. If we later prefer to splice the data as a binary indicator
+variable, it is simple enough to encode all positive numbers as a
+<code>1</code> (<code>True</code>) value and all zeroes as a
+<code>0</code> (<code>False</code>) value.</p>
+<p>However, American families are not always so clear-cut. What,
+exactly, makes a parent a “parent”? Is the spouse of your parent also a
+parent?</p>
+<p>Answering questions about parenthood can also be complicated by
+households where the individual we’re studying isn’t classified as head
+of household. Consider this hypothetical example:</p>
+<pre class="r"><code>hypothetical_data &lt;- data.frame(
+  pers_id = 1:3,
+  hh_id = rep(2, 3),
+  RELATED = c(101, 1114, 301),
+  RELATED_name = c(&quot;Head of Household&quot;, &quot;Unmarried Partner&quot;, &quot;Child&quot;),
+  AGE = c(60, 62, 20),
+  SEX = c(&quot;F&quot;, &quot;M&quot;, &quot;M&quot;),
+  cohabit_parent &lt;- c(0, 0, &quot;1 or 2?&quot;),
+  cohabit_parent_binary &lt;- c(&quot;False&quot;, &quot;False&quot;, &quot;True&quot;)
+)
+kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</code></pre>
+<table>
+<caption>Hypothetical Household Example</caption>
+<colgroup>
+<col width="5%" />
+<col width="4%" />
+<col width="5%" />
+<col width="13%" />
+<col width="2%" />
+<col width="2%" />
+<col width="26%" />
+<col width="38%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">pers_id</th>
+<th align="right">hh_id</th>
+<th align="right">RELATED</th>
+<th align="left">RELATED_name</th>
+<th align="right">AGE</th>
+<th align="left">SEX</th>
+<th align="left">cohabit_parent….c.0..0…1.or.2…</th>
+<th align="left">cohabit_parent_binary….c..False….False….True..</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">2</td>
+<td align="right">101</td>
+<td align="left">Head of Household</td>
+<td align="right">60</td>
+<td align="left">F</td>
+<td align="left">0</td>
+<td align="left">False</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="right">1114</td>
+<td align="left">Unmarried Partner</td>
+<td align="right">62</td>
+<td align="left">M</td>
+<td align="left">0</td>
+<td align="left">False</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">2</td>
+<td align="right">301</td>
+<td align="left">Child</td>
+<td align="right">20</td>
+<td align="left">M</td>
+<td align="left">1 or 2?</td>
+<td align="left">True</td>
+</tr>
+</tbody>
+</table>
+<p>In this example, we’re able to classify the 20-year old young adult
+as living with at least one parent - in this case, the head of
+household. Should we also count the unmarried partner as an additional
+parent? This question is highly contextual and unlikely to be answerable
+given our limited information. It also may require a judgement about
+what constitutes a family, which is a highly cultural question.</p>
+<p>We may breathe a sigh of relief that regardless of the answer, at
+least our <code>cohabit_parent_binary</code> column is unchanged: it
+still equals <code>True</code>, whether or not we classify the unmarried
+spouse of the child’s mother as an additional parent. But our ability to
+discern this parenthood could be easily complicated if the same
+household had chosen to designate the unmarried spouse as “person 1” or
+“head of household”:</p>
+<pre class="r"><code>hypothetical_data &lt;- data.frame(
+  pers_id = 1:3,
+  hh_id = rep(2, 3),
+  RELATED = c(101, 1114, &quot;303? 1001? or 1260?&quot;),
+  RELATED_name = c(&quot;Head of Household&quot;, &quot;Unmarried Partner&quot;, &quot;Stepchild? Other Relative? or Other Non-Relative?&quot;),
+  AGE = c(62, 60, 20),
+  SEX = c(&quot;M&quot;, &quot;F&quot;, &quot;M&quot;),
+  cohabit_parent &lt;- c(0, 0, &quot;0, 1, or 2?&quot;),
+  cohabit_parent_binary &lt;- c(&quot;False&quot;, &quot;False&quot;, &quot;False or True?&quot;)
+)
+kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</code></pre>
+<table>
+<caption>Hypothetical Household Example</caption>
+<colgroup>
+<col width="4%" />
+<col width="3%" />
+<col width="10%" />
+<col width="25%" />
+<col width="2%" />
+<col width="2%" />
+<col width="20%" />
+<col width="32%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">pers_id</th>
+<th align="right">hh_id</th>
+<th align="left">RELATED</th>
+<th align="left">RELATED_name</th>
+<th align="right">AGE</th>
+<th align="left">SEX</th>
+<th align="left">cohabit_parent….c.0..0…0..1..or.2…</th>
+<th align="left">cohabit_parent_binary….c..False….False….False.or.True…</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">2</td>
+<td align="left">101</td>
+<td align="left">Head of Household</td>
+<td align="right">62</td>
+<td align="left">M</td>
+<td align="left">0</td>
+<td align="left">False</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="left">1114</td>
+<td align="left">Unmarried Partner</td>
+<td align="right">60</td>
+<td align="left">F</td>
+<td align="left">0</td>
+<td align="left">False</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">2</td>
+<td align="left">303? 1001? or 1260?</td>
+<td align="left">Stepchild? Other Relative? or Other Non-Relative?</td>
+<td align="right">20</td>
+<td align="left">M</td>
+<td align="left">0, 1, or 2?</td>
+<td align="left">False or True?</td>
+</tr>
+</tbody>
+</table>
+<p>The above table shows the same hypothetical household: the only
+difference is the designated “person 1” who filled ou the survey.
+Because all relationships are classified through the head of household,
+our visibility into the relationship between two other housemates can be
+complicated by their relationship with the head of household. It’s
+likely, in this situation, that the 62-year-old man might list the
+20-year-old son of his spouse as his stepchild. But since him and his
+spouse are not technically married, he also might list this son as an
+“Other Relative” or “Other Non-Relative”. In this case, we may
+accidentally fail to code the son as living with a parent.</p>
+<p>These nuances cannot be eliminated, and are important to keep in
+mind. In the following section, we outline our preliminary methods of
+assigning the cohabitation status of everyone in our sample. This
+bucketing is not perfect. In an ideal situation, we can run various
+analyses assuming all of our murky observations trend one way or another
+as a sensitivity test for our classification scheme.</p>
+</div>
+<div id="classifying-families-the-current-methodology" class="section level2">
+<h2>Classifying families: the current methodology</h2>
 </div>
 
 
