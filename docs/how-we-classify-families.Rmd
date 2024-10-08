@@ -1,0 +1,39 @@
+---
+title: "How we Classify Families"
+output: html_document
+---
+
+## Introduction
+
+This document outlines the methodology and logic used to produce family relationships and categorize households in our analysis. We will explain the criteria and processes applied to classify different household types and head of household status.
+
+## Classification
+
+IPUMS provides detailed information on the relationships between individuals of a single household in its `RELATE` and `RELATED` variables. The person filling out the survey is designated as "head of household" or "person 1". ("Head of household" has fallen out of use, as it used to specifically designate men. The new terminology is intended to be more gender inclusive.) This person receives the code of `101` in the `RELATED` variable. All other individuals in the same household unit are then assigned codes based on their relationship with person 1. The following table is a summary of these statuses as they appeared in the 2022 1-year American Community Survey, sorted from most frequently reported to least frequently reported. The `count` column represents the raw number of respondents with that code. The sum_weights column represents the total number of people in the United States estimated to have that status.
+
+```{r related_vars_2022, echo=FALSE}
+hoh_status_2022 <- read.csv("../results/hoh_status_2022.csv")
+hoh_status_2022
+```
+
+A quick data validation check can be done: Since each of these categories are non-overlapping and no respondents have `NA` answers, the sum of all the entries in the `sum_weights` column should equal the entire U.S. population in 2022. Indeed, this sum equals `sum(hoh_status_2022$sum_weights)`. A quick Google search for the U.S. population in 2022 indicates 333.3 million: our number matches exactly.
+
+From here on out, we'll work with the table containing all `RELATED` answers from 2012 to 2022, to ensure we don't miss any classifications that occur in earlier years. Indeed, this table has one more row than the 2022 table, indicating that there's one additional entry in the `RELATED` IPUMS variable that occurred in years prior to 2022 but not in 2022.
+
+```{r related_vars_overall, echo=FALSE}
+hoh_status <- read.csv("../results/hoh_status.csv")
+hoh_status
+```
+
+The challenge here is to accurately identify instances where individuals live with their parents. (In subsequent work, we may also look at parents-in-law, but to keep things simple, we'll stick with parents for now). If the individual we're studying is listed as "head of household" (`RELATED = 101`), then identifying parents is fairly easy. We can simply tabulate the number of individuals in the household who have `RELATED` codes of `501` ("parent"). Here, for example, is a hypothetical household from our survey data:
+
+( create a table here where the first col is pers_id and numbers from 1 thorugh 4. the second row is hh_id and all four rows have an entry of 1. the next col is RELATED, and we'll have the codes be 101, 501, 301, 301. The next column is RELATED_name and we'll have Head of Household, Parent, Child, Child. The next column is AGE and we'll have 26, 51, 0, and 2. The next column is SEX and we'll have F, F, M, M.)
+
+This household appears fairly clear-cut. We have a single mother living with her parent and her two children, ages 0 and 2. In our `cohabit_parent` variable, we'd assign the members of the household the following keys:
+
+(same table as above except now there's an extra column called cohabit_parent which is 1, 0, 1, 1).
+
+What about this household, however?
+
+
+
