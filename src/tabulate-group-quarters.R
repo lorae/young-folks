@@ -24,13 +24,28 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
 ipums_relate <- tbl(con, "ipums_relationships")
 
+# Overall HoH status
 hoh_status <- create_crosstabs(
+  data = ipums_relate,
+  weight_column = "PERWT",
+  group_by_columns = c("RELATED")
+) |> 
+  collect() |>
+  arrange(-sum_weights) |>
+  left_join(
+    x = _, 
+    y = value_labels_list$RELATED, 
+    by = c("RELATED" = "val")
+  )
+
+# 2022 HoH status
+hoh_status_2022 <- create_crosstabs(
   data = ipums_relate |> filter(YEAR == 2022),
   weight_column = "PERWT",
   group_by_columns = c("RELATED")
 ) |> 
   collect() |>
-  arrange(RELATED) |>
+  arrange(-sum_weights) |>
   left_join(
     x = _, 
     y = value_labels_list$RELATED, 
@@ -39,7 +54,7 @@ hoh_status <- create_crosstabs(
 
 # Data check: The sum of the sum_weights column should equal 
 # the population of the US. This looks right, at 333.3 million.
-sum(hoh_status$sum_weights)
+sum(hoh_status_2022$sum_weights)
 
 # The prison population of the US is about 1.9 million but 
 # the "Institutional inmates" population of the US is about
@@ -47,3 +62,7 @@ sum(hoh_status$sum_weights)
 # military members living in barracks, the incarcerated 
 # population, populations living in nursing homes, mental 
 # institutions, and other shelters.
+
+# Let's write the results to a CSV to look at later.
+write_csv(hoh_status_2022, "results/hoh_status_2022.csv")
+write_csv(hoh_status, "results/hoh_status.csv")

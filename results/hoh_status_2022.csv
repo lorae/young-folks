@@ -1,0 +1,19 @@
+RELATED,count,sum_weights,lbl
+101,1323938,129871198,Head/Householder
+301,770271,86789931,Child
+201,672912,60889413,Spouse
+1114,85166,9554851,Unmarried Partner
+901,67038,7534724,Grandchild
+1115,48540,5993702,Housemate/Roomate
+1270,96910,4544114,Non-inmate 1990
+501,39878,4033195,Parent
+1001,32128,3880010,Other Relatives
+303,34356,3835002,Stepchild
+1260,34717,3768626,Other non-relatives (1990 includes employees)
+701,32670,3750380,Sibling
+1301,84260,3608779,Institutional inmates
+302,19726,2080709,Adopted Child
+401,12493,1321045,Child-in-law
+601,10848,1022530,Parent-in-Law
+801,5187,560359,Sibling-in-Law
+1242,2340,248994,Foster children
