@@ -18,6 +18,15 @@ devtools::load_all("../dataduck")
 
 # ----- Step 2: Import and wrangle data ----- #
 
-con <- dbConnect(duckdb::duckdb(), "data/db/ipums-processed.duckdb")
+con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
-ipums_bucketed |> filter()
+ipums_relate <- tbl(con, "ipums_relationships")
+
+create_crosstabs(
+  data = ipums_relate,
+  weight_column = "PERWT",
+  group_by_columns = c("AGE_bucket", "cohabit_parent")
+) |> 
+  collect() |>
+  arrange(AGE_bucket, cohabit_parent) |>
+  View()
