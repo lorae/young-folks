@@ -2,6 +2,7 @@
 title: "How We Classify Families"
 output: 
   html_document:
+    self_contained: true
     toc: true         # Enable the table of contents
     toc_float: true   # Make the table of contents float
     number_sections: false
@@ -18,9 +19,7 @@ This document outlines the methodology and logic used to produce family relation
 
 # Classification
 
-The IPUMS dataset provides detailed information on relationships between individuals in a household through the `RELATE` and `RELATED` variables. The person filling out the survey is designated as "head of household" or "person 1" (this term has evolved to be more gender-inclusive). This individual receives the code `101` in the `RELATED` variable, and all other individuals in the same household are assigned codes based on their relationship to person 1. Below is a summary of these relationship statuses in the 2022 1-year American Community Survey, sorted by frequency. The `count` column shows the raw number of respondents with that code, and the `sum_weights` column represents the total number of people estimated to have that status in the U.S.
-
-IPUMS provides detailed information on the relationships between individuals in a household through its `RELATED` variable. The person who answers the survey is designated as "head of household" or "person 1". ("Head of household" has fallen out of use by the Census, as it used to specifically designate men. The new terminology is intended to be more gender inclusive. In this document, we use them interchangeably.) This person receives the code of `101` in the `RELATED` variable. All other individuals in the same household unit are then assigned codes based on their relationship with this person. The following table is a summary of these statuses as they appeared in the 2022 1-year American Community Survey, sorted from most frequently reported to least frequently reported. The `count` column represents the raw number of respondents with that code. The `sum_weights` column represents the total number of people in the United States estimated to have that status by weighting the respondents using their `PERWT` values.
+IPUMS provides detailed information on the relationships between individuals in a household through its `RELATED` variable. [The person who owns / pays rent on the property of residence,](https://www2.census.gov/programs-surveys/acs/methodology/questionnaires/2024/quest24.pdf) is typically designated the "head of household" or "person 1". ("Head of household" has fallen out of use by the Census, as it used to specifically designate men. The new terminology is intended to be more gender inclusive. In this document, we use them interchangeably.) This person receives the code of `101` in the `RELATED` variable. All other individuals in the same household unit are then assigned codes based on their relationship with this person. The following table is a summary of these statuses as they appeared in the 2022 1-year American Community Survey, sorted from most frequently reported to least frequently reported. The `count` column represents the raw number of respondents with that code. The `sum_weights` column represents the total number of people in the United States estimated to have that status by weighting the respondents using their `PERWT` values.
 
 ```{r tab01, echo=FALSE, message=FALSE, warning=FALSE}
 hoh_status_2022 <- read.csv("../results/hoh_status_2022.csv")
@@ -29,7 +28,7 @@ kable(hoh_status_2022, caption = "Table 1: 2022 RELATED Values")
 
 To validate the data, we can sum the `sum_weights` column, which should equal the total U.S. population in 2022. This sum is `r sum(hoh_status_2022$sum_weights)`, matching the reported population of 333.3 million in this year.
 
-The following table expands upon "2022 RELATED Values" by showing unique answers from all year 2012 to 2022. This table has additional entry not present in the 2022 dataset, and will be used as a reference for variable encoding in later sections of this document.
+The following table expands upon "2022 RELATED Values" by showing unique answers from all year 2012 to 2022. This table has additional entry (`RELATE = 1241`: "Roomers/boarders/lodgers) not present in the 2022 dataset, and will be used as a reference for variable encoding in later sections of this document.
 
 ```{r tab02, echo=FALSE}
 hoh_status <- read.csv("../results/hoh_status.csv")
@@ -106,6 +105,7 @@ In the following section, we define our current parental cohabitation strategy.
 With the caveats above, let's get down to defining how we classify parental cohabitation. The binary variable for the same concept will be designated `cohabit_bin`.
 
 Note some general rules of thumb:
+
 - Children, adopted children, foster children, and stepchildren are all equally counted as children.
 - The spouse of a parent is also a parent.
 - The unmarried partner of a parent is also a parent.
@@ -230,15 +230,16 @@ A person with this status does not live with a parent.
 
 A person with this status does not live with a parent.
 
-Note: Table 1: 2022 RELATED Values shows that there were 3.6 million instititutional inmates recorded in IPUMS in 2022. The total prisoner population of the U.S. in 2022 was just under 2 million. These other institutional inmates may include military living in barracks, individuals living in group living facilities like nursing homes, and potentially individuals in mental health care facilities. We will have to read more IPUMS documentation to ascertain what this encoding means in practice.
+Note: Table 1 shows that there were 3.6 million institutional inmates recorded in IPUMS in 2022. The total prisoner population of the U.S. in 2022 was just under 2 million. These other institutional inmates may include military living in barracks, individuals living in group living facilities like nursing homes, and potentially individuals in mental health care facilities. We will have to read more IPUMS documentation to ascertain what this encoding means in practice.
 
 # Next Steps
 
 For each of the abovementioned rules, we'll quantify the number of additional observations of `cohabit_bin` it produces. This will help us determine the sensitivity of our results to our definitions of parenthood. 
 
 We'll also consider defining parenthood more strictly or more loosely, and quantify the difference in counts these alternative classifications make. For example:
+
 - Looser definition: parents-in-law are also classified as parents.
-- Stricted definition: foster parents are not parents; unmarried spouses of parents are not parents; stepparents are not parents.
+- Stricter definition: foster parents are not parents; unmarried spouses of parents are not parents; stepparents are not parents.
 
 If misclassification appears to be a serious issue, more attention could be taken to accurately classify parenthood: for example, using relative ages of household members or IPUMS subfamilily variables.
 
