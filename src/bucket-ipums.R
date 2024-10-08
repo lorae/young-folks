@@ -73,7 +73,7 @@ validate_row_counts(
 # Define the list of bucket columns to be added
 bucket_columns <- list(
   list(
-    lookup_filepath = "lookup_tables/age/age_buckets00.csv",
+    lookup_filepath = "lookup_tables/age/age_buckets01.csv",
     input_column = "AGE"
   ),
   list(
