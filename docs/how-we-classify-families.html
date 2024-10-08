@@ -362,23 +362,37 @@ household types and head of household status.</p>
 </div>
 <div id="classification" class="section level2">
 <h2>Classification</h2>
-<p>IPUMS provides detailed information on the relationships between
-individuals of a single household in its <code>RELATE</code> and
+<p>The IPUMS dataset provides detailed information on relationships
+between individuals in a household through the <code>RELATE</code> and
 <code>RELATED</code> variables. The person filling out the survey is
-designated as “head of household” or “person 1”. (“Head of household”
-has fallen out of use, as it used to specifically designate men. The new
-terminology is intended to be more gender inclusive.) This person
-receives the code of <code>101</code> in the <code>RELATED</code>
-variable. All other individuals in the same household unit are then
-assigned codes based on their relationship with person 1. The following
-table is a summary of these statuses as they appeared in the 2022 1-year
-American Community Survey, sorted from most frequently reported to least
-frequently reported. The <code>count</code> column represents the raw
-number of respondents with that code. The <code>sum_weights</code>
-column represents the total number of people in the United States
-estimated to have that status.</p>
+designated as “head of household” or “person 1” (this term has evolved
+to be more gender-inclusive). This individual receives the code
+<code>101</code> in the <code>RELATED</code> variable, and all other
+individuals in the same household are assigned codes based on their
+relationship to person 1. Below is a summary of these relationship
+statuses in the 2022 1-year American Community Survey, sorted by
+frequency. The <code>count</code> column shows the raw number of
+respondents with that code, and the <code>sum_weights</code> column
+represents the total number of people estimated to have that status in
+the U.S.</p>
+<p>IPUMS provides detailed information on the relationships between
+individuals in a household through its <code>RELATED</code> variable.
+The person who answers the survey is designated as “head of household”
+or “person 1”. (“Head of household” has fallen out of use by the Census,
+as it used to specifically designate men. The new terminology is
+intended to be more gender inclusive. In this document, we use them
+interchangeably.) This person receives the code of <code>101</code> in
+the <code>RELATED</code> variable. All other individuals in the same
+household unit are then assigned codes based on their relationship with
+this person. The following table is a summary of these statuses as they
+appeared in the 2022 1-year American Community Survey, sorted from most
+frequently reported to least frequently reported. The <code>count</code>
+column represents the raw number of respondents with that code. The
+<code>sum_weights</code> column represents the total number of people in
+the United States estimated to have that status by weighting the
+respondents using their <code>PERWT</code> values.</p>
 <table>
-<caption>2022 Head of Household Statuses</caption>
+<caption>2022 RELATED Values</caption>
 <colgroup>
 <col width="10%" />
 <col width="10%" />
@@ -504,20 +518,16 @@ estimated to have that status.</p>
 </tr>
 </tbody>
 </table>
-<p>A quick data validation check can be done: Since each of these
-categories are non-overlapping and no respondents have <code>NA</code>
-answers, the sum of all the entries in the <code>sum_weights</code>
-column should equal the entire U.S. population in 2022. Indeed, this sum
-equals 333287562. A quick Google search for the U.S. population in 2022
-indicates 333.3 million: our number matches exactly.</p>
-<p>From here on out, we’ll work with the table containing all
-<code>RELATED</code> answers from 2012 to 2022, to ensure we don’t miss
-any classifications that occur in earlier years. Indeed, this table has
-one more row than the 2022 table, indicating that there’s one additional
-entry in the <code>RELATED</code> IPUMS variable that occurred in years
-prior to 2022 but not in 2022.</p>
+<p>To validate the data, we can sum the <code>sum_weights</code> column,
+which should equal the total U.S. population in 2022. This sum is
+333287562, matching the reported population of 333.3 million in this
+year.</p>
+<p>The following table expands upon “2022 RELATED Values” by showing
+unique answers from all year 2012 to 2022. This table has additional
+entry not present in the 2022 dataset, and will be used as a reference
+for variable encoding in later sections of this document.</p>
 <table>
-<caption>Overall Head of Household Statuses from 2012-2022</caption>
+<caption>RELATED Values, as reported from 2012-2022</caption>
 <colgroup>
 <col width="10%" />
 <col width="12%" />
@@ -649,26 +659,16 @@ prior to 2022 but not in 2022.</p>
 </tr>
 </tbody>
 </table>
-<p>The challenge here is to accurately identify instances where
-individuals live with their parents. (In subsequent work, we may also be
-able to classify parents-in-law, but to keep things simple, we’ll stick
-with parents for now). If the individual we’re studying is listed as
-“person 1” / “head of household” (<code>RELATED = 101</code>), then
-identifying parents is fairly easy. We can simply tabulate the number of
-individuals in the household who have <code>RELATED</code> codes of
-<code>501</code> (“parent”). Here, for example, is a hypothetical
-household from our survey data:</p>
-<pre class="r"><code>hypothetical_data &lt;- data.frame(
-  pers_id = 1:5,
-  hh_id = rep(1, 5),
-  RELATED = c(101, 501, 501, 301, 301),
-  RELATED_name = c(&quot;Head of Household&quot;, &quot;Parent&quot;, &quot;Parent&quot;, &quot;Child&quot;, &quot;Child&quot;),
-  AGE = c(26, 51, 52, 0, 2),
-  SEX = c(&quot;F&quot;, &quot;F&quot;, &quot;M&quot;, &quot;M&quot;, &quot;M&quot;)
-)
-kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</code></pre>
+<p>Accurately identifying individuals living with their parents presents
+some challenges. In this analysis, we focus on parents only (though
+future work may include parents-in-law). When a person is designated as
+“person 1” or “head of household” (<code>RELATED = 101</code>),
+identifying parents is relatively straightforward: we look for
+individuals in the household with <code>RELATED</code> codes of
+<code>501</code> (“parent”). For example consider the hypothetical
+household in table 1:</p>
 <table>
-<caption>Hypothetical Household Example</caption>
+<caption>Table 1a: Hypothetical Multigenerational Household</caption>
 <thead>
 <tr class="header">
 <th align="right">pers_id</th>
@@ -722,14 +722,11 @@ kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</
 </tr>
 </tbody>
 </table>
-<p>This household appears fairly clear-cut. We have a single mother
-living with her two parents and her two children, ages 0 and 2. In our
-<code>cohabit_parent</code> variable, we’d assign the members of the
-household the following keys:</p>
-<pre class="r"><code>hypothetical_data$cohabit_parent &lt;- c(2, 0, 0, 1, 1)
-kable(hypothetical_data, caption = &quot;Cohabit Parent Example&quot;)</code></pre>
+<p>In this household, a single mother lives with her two parents and her
+two children. In our <code>cohabit_parent</code> column, we assign
+values as follows:</p>
 <table>
-<caption>Cohabit Parent Example</caption>
+<caption>Table 1b: Hypothetical Multigenerational Household</caption>
 <thead>
 <tr class="header">
 <th align="right">pers_id</th>
@@ -796,34 +793,21 @@ children. If we later prefer to splice the data as a binary indicator
 variable, it is simple enough to encode all positive numbers as a
 <code>1</code> (<code>True</code>) value and all zeroes as a
 <code>0</code> (<code>False</code>) value.</p>
-<p>However, American families are not always so clear-cut. What,
-exactly, makes a parent a “parent”? Is the spouse of your parent also a
-parent?</p>
-<p>Answering questions about parenthood can also be complicated by
-households where the individual we’re studying isn’t classified as head
-of household. Consider this hypothetical example:</p>
-<pre class="r"><code>hypothetical_data &lt;- data.frame(
-  pers_id = 1:3,
-  hh_id = rep(2, 3),
-  RELATED = c(101, 1114, 301),
-  RELATED_name = c(&quot;Head of Household&quot;, &quot;Unmarried Partner&quot;, &quot;Child&quot;),
-  AGE = c(60, 62, 20),
-  SEX = c(&quot;F&quot;, &quot;M&quot;, &quot;M&quot;),
-  cohabit_parent &lt;- c(0, 0, &quot;1 or 2?&quot;),
-  cohabit_parent_binary &lt;- c(&quot;False&quot;, &quot;False&quot;, &quot;True&quot;)
-)
-kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</code></pre>
+<div id="complicating-cases" class="section level3">
+<h3>Complicating Cases</h3>
+<p>American families are not always so straightforward.For example,
+consider this household:</p>
 <table>
-<caption>Hypothetical Household Example</caption>
+<caption>Table 2a: Unmarried Spouse and Adult Child</caption>
 <colgroup>
-<col width="5%" />
+<col width="9%" />
+<col width="7%" />
+<col width="9%" />
+<col width="21%" />
 <col width="4%" />
-<col width="5%" />
-<col width="13%" />
-<col width="2%" />
-<col width="2%" />
-<col width="26%" />
-<col width="38%" />
+<col width="4%" />
+<col width="17%" />
+<col width="25%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -833,8 +817,8 @@ kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</
 <th align="left">RELATED_name</th>
 <th align="right">AGE</th>
 <th align="left">SEX</th>
-<th align="left">cohabit_parent….c.0..0…1.or.2…</th>
-<th align="left">cohabit_parent_binary….c..False….False….True..</th>
+<th align="left">cohabit_parent</th>
+<th align="left">cohabit_parent_binary</th>
 </tr>
 </thead>
 <tbody>
@@ -874,37 +858,24 @@ kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</
 as living with at least one parent - in this case, the head of
 household. Should we also count the unmarried partner as an additional
 parent? This question is highly contextual and unlikely to be answerable
-given our limited information. It also may require a judgement about
-what constitutes a family, which is a highly cultural question.</p>
+given our limited information. It is also highly cultural.</p>
 <p>We may breathe a sigh of relief that regardless of the answer, at
 least our <code>cohabit_parent_binary</code> column is unchanged: it
 still equals <code>True</code>, whether or not we classify the unmarried
 spouse of the child’s mother as an additional parent. But our ability to
 discern this parenthood could be easily complicated if the same
-household had chosen to designate the unmarried spouse as “person 1” or
-“head of household”:</p>
-<pre class="r"><code>hypothetical_data &lt;- data.frame(
-  pers_id = 1:3,
-  hh_id = rep(2, 3),
-  RELATED = c(101, 1114, &quot;303? 1001? or 1260?&quot;),
-  RELATED_name = c(&quot;Head of Household&quot;, &quot;Unmarried Partner&quot;, &quot;Stepchild? Other Relative? or Other Non-Relative?&quot;),
-  AGE = c(62, 60, 20),
-  SEX = c(&quot;M&quot;, &quot;F&quot;, &quot;M&quot;),
-  cohabit_parent &lt;- c(0, 0, &quot;0, 1, or 2?&quot;),
-  cohabit_parent_binary &lt;- c(&quot;False&quot;, &quot;False&quot;, &quot;False or True?&quot;)
-)
-kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</code></pre>
-<table>
-<caption>Hypothetical Household Example</caption>
+household had answered the survey differently:</p>
+<table style="width:100%;">
+<caption>Table 2b: Unmarried Spouse and Adult Child</caption>
 <colgroup>
+<col width="6%" />
 <col width="4%" />
+<col width="15%" />
+<col width="38%" />
 <col width="3%" />
-<col width="10%" />
-<col width="25%" />
-<col width="2%" />
-<col width="2%" />
-<col width="20%" />
-<col width="32%" />
+<col width="3%" />
+<col width="11%" />
+<col width="17%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -914,8 +885,8 @@ kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</
 <th align="left">RELATED_name</th>
 <th align="right">AGE</th>
 <th align="left">SEX</th>
-<th align="left">cohabit_parent….c.0..0…0..1..or.2…</th>
-<th align="left">cohabit_parent_binary….c..False….False….False.or.True…</th>
+<th align="left">cohabit_parent</th>
+<th align="left">cohabit_parent_binary</th>
 </tr>
 </thead>
 <tbody>
@@ -951,22 +922,22 @@ kable(hypothetical_data, caption = &quot;Hypothetical Household Example&quot;)</
 </tr>
 </tbody>
 </table>
-<p>The above table shows the same hypothetical household: the only
-difference is the designated “person 1” who filled ou the survey.
-Because all relationships are classified through the head of household,
-our visibility into the relationship between two other housemates can be
-complicated by their relationship with the head of household. It’s
-likely, in this situation, that the 62-year-old man might list the
-20-year-old son of his spouse as his stepchild. But since him and his
-spouse are not technically married, he also might list this son as an
-“Other Relative” or “Other Non-Relative”. In this case, we may
-accidentally fail to code the son as living with a parent.</p>
-<p>These nuances cannot be eliminated, and are important to keep in
-mind. In the following section, we outline our preliminary methods of
-assigning the cohabitation status of everyone in our sample. This
-bucketing is not perfect. In an ideal situation, we can run various
-analyses assuming all of our murky observations trend one way or another
-as a sensitivity test for our classification scheme.</p>
+<p>The only difference between tables 2a and 2b are the person who
+filled out the survey. Because all relationships are classified through
+the head of household, our visibility into the relationship between two
+other housemates can be complicated by their relationship with the head
+of household. In this example, it’s likely that the 62-year-old head of
+household might list the 20-year-old son of his spouse as his stepchild.
+But since him and his spouse are not technically married, he also might
+list this son as an “Other Relative” or “Other Non-Relative”. In this
+case, we may accidentally fail to code the son as living with a
+parent.</p>
+<p>These nuances cannot be eliminated. However, we can later run
+sensitivity analyses to various bucketing schemes to calculate the scope
+of our potential error.</p>
+<p>In the following section, we define our current parental cohabitation
+strategy.</p>
+</div>
 </div>
 <div id="classifying-families-the-current-methodology" class="section level2">
 <h2>Classifying families: the current methodology</h2>
