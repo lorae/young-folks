@@ -23,7 +23,7 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_relate <- tbl(con, "ipums_relationships")
 
 # An initial crosstab of the rate of cohabitation by age bucket
-cohabit_2022 <- create_crosstabs(
+cohabit_2022 <- crosstab_count(
   data = ipums_relate |> filter(YEAR == 2022),
   weight_column = "PERWT",
   group_by_columns = c("AGE_bucket", "cohabit_bin")
@@ -93,7 +93,7 @@ ggsave("results/cohabitation_by_age_2022.png", width = 6.5, height = 5, units = 
 ##### 2012
 
 # An initial crosstab of the rate of cohabitation by age bucket
-cohabit_2012 <- create_crosstabs(
+cohabit_2012 <- crosstab_count(
   data = ipums_relate |> filter(YEAR == 2012),
   weight_column = "PERWT",
   group_by_columns = c("AGE_bucket", "cohabit_bin")

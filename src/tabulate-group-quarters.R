@@ -25,7 +25,7 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_relate <- tbl(con, "ipums_relationships")
 
 # Overall HoH status
-hoh_status <- create_crosstabs(
+hoh_status <- crosstab_count(
   data = ipums_relate,
   weight_column = "PERWT",
   group_by_columns = c("RELATED")
@@ -39,7 +39,7 @@ hoh_status <- create_crosstabs(
   )
 
 # 2022 HoH status
-hoh_status_2022 <- create_crosstabs(
+hoh_status_2022 <- crosstab_count(
   data = ipums_relate |> filter(YEAR == 2022),
   weight_column = "PERWT",
   group_by_columns = c("RELATED")
@@ -57,7 +57,7 @@ hoh_status_2022 <- create_crosstabs(
 sum(hoh_status_2022$sum_weights)
 
 # 2012 HoH status
-hoh_status_2012 <- create_crosstabs(
+hoh_status_2012 <- crosstab_count(
   data = ipums_relate |> filter(YEAR == 2012),
   weight_column = "PERWT",
   group_by_columns = c("RELATED")
