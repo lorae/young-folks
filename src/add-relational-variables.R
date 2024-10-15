@@ -45,23 +45,23 @@ ipums_final <- ipums_with_counts |>
         cohabit_bin = case_when(
           RELATED == 101 ~ if_else(count_RELATED_501 > 0, 1, 0),
           RELATED == 201 ~ if_else(count_RELATED_601 > 0, 1, 0),
-          RELATED == 301 ~ 1,
-          RELATED == 302 ~ 1,
-          RELATED == 303 ~ 1,
+          RELATED == 301 ~ 3,
+          RELATED == 302 ~ 3,
+          RELATED == 303 ~ 3,
           RELATED == 401 ~ 0,
           RELATED == 501 ~ 0,
           RELATED == 601 ~ 0,
-          RELATED == 701 ~ if_else(count_RELATED_501 > 0, 1, 0),
-          RELATED == 801 ~ if_else(count_RELATED_601 > 0, 1, 0),
-          RELATED == 901 ~ if_else(count_RELATED_301 > 0, 1, 0),
+          RELATED == 701 ~ if_else(count_RELATED_501 > 0, 2, 0),
+          RELATED == 801 ~ if_else(count_RELATED_601 > 0, 2, 0),
+          RELATED == 901 ~ if_else(count_RELATED_301 > 0, 2, 0),
           RELATED == 1001 ~ 0,
           RELATED == 1114 ~ if_else(count_RELATED_601 > 0, 1, 0),
           RELATED == 1115 ~ 0,
           RELATED == 1241 ~ 0,
-          RELATED == 1242 ~ 1,
+          RELATED == 1242 ~ 3,
           RELATED == 1260 ~ 0,
           RELATED == 1270 ~ 0,
-          RELATED == 1301 ~ 2,  # Special case for 1301
+          RELATED == 1301 ~ 9,  # Special case for 1301
           TRUE ~ NA_real_  # NA for all other cases
         )
       ) |>

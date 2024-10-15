@@ -2206,20 +2206,25 @@ all equally counted as children.</li>
 <p>We’ll explore possible encodings using the <code>RELATED</code> value
 of the person we’re observing. The following sections are organized by
 these <code>RELATED</code> encodings, in numeric order.</p>
+<p>We’ll assign someone a cohabit_bin = 0 when a person is not living
+with a parent, 1 when they live with a parent but they are the provider,
+2 if they live with a parent but neither child nor parent is the
+provider, 3 if they live with the parent as provider, and 9 if they live
+in a group setting.</p>
 <div id="related-101-head-of-household" class="section level4">
 <h4><code>RELATED = 101</code>: Head of household</h4>
-<p>A person with this status lives with a parent if there is at least
-one person with the following <code>RELATED</code> values in the
-household:</p>
+<p>A person with this status lives with a parent as the provider
+(<code>cohabit_bin = 1</code>) if there is at least one person with the
+following <code>RELATED</code> values in the household:</p>
 <ul>
 <li><code>501</code>: Parent</li>
 </ul>
 </div>
 <div id="related-201-spouse" class="section level4">
 <h4><code>RELATED = 201</code>: Spouse</h4>
-<p>A person with this status lives with a parent if there is at least
-one person with the following <code>RELATED</code> values in the
-household:</p>
+<p>A person with this status lives with a parent as the provider
+(<code>cohabit_bin = 1</code>) if there is at least one person with the
+following <code>RELATED</code> values in the household:</p>
 <ul>
 <li><code>601</code>: Parent-in-Law</li>
 </ul>
@@ -2230,15 +2235,18 @@ the household.</p>
 </div>
 <div id="related-301-child" class="section level4">
 <h4><code>RELATED = 301</code>: Child</h4>
-<p>A person with this status always lives with a parent.</p>
+<p>A person with this status always lives with a parent with the parent
+as the provider (<code>cohabit_bin = 3</code>)</p>
 </div>
 <div id="related-302-adopted-child" class="section level4">
 <h4><code>RELATED = 302</code>: Adopted Child</h4>
-<p>A person with this status always lives with a parent.</p>
+<p>A person with this status always lives with a parent with the parent
+as the provider (<code>cohabit_bin = 3</code>)</p>
 </div>
 <div id="related-303-stepchild" class="section level4">
 <h4><code>RELATED = 303</code>: Stepchild</h4>
-<p>A person with this status always lives with a parent.</p>
+<p>A person with this status always lives with a parent with the parent
+as the provider (<code>cohabit_bin = 3</code>)</p>
 </div>
 <div id="related-401-child-in-law" class="section level4">
 <h4><code>RELATED = 401</code>: Child-in-law</h4>
@@ -2275,6 +2283,8 @@ household:</p>
 <ul>
 <li><code>501</code>: Parent</li>
 </ul>
+<p>They are not the provider, but the parent is not either, so they get
+(<code>cohabit_bin = 2</code>)</p>
 </div>
 <div id="related-801-sibling-in-law" class="section level4">
 <h4><code>RELATED = 801</code>: Sibling-in-Law</h4>
@@ -2286,7 +2296,8 @@ household:</p>
 </ul>
 <p>Note that this may produce an overcount if the parent-in-law in
 residence is an unrelated parent-in-law to the sibling-in-law. However,
-this situation is probably rare.</p>
+this situation is probably rare. They are not the provider, but the
+parent is not either, so they get (<code>cohabit_bin = 2</code>)</p>
 </div>
 <div id="related-901-grandchild" class="section level4">
 <h4><code>RELATED = 901</code>: Grandchild</h4>
@@ -2299,7 +2310,8 @@ household:</p>
 <p>Note that this may produce an overcount if the child in residence is
 not the mother/father of the grandchild. However, this situation is
 likely rare (and unlikely to present itself in the target ages we are
-studying).</p>
+studying). They are not the provider, but the parent is not either, so
+they get (<code>cohabit_bin = 2</code>)</p>
 </div>
 <div id="related-1001-other-relatives" class="section level4">
 <h4><code>RELATED = 1001</code>: Other Relatives</h4>
@@ -2320,7 +2332,8 @@ household:</p>
 <p>Note: This may be an undercount, since someone may not call the
 parent of an unmarried spouse a “parent-in-law”. Further caveats from
 the section related to <code>RELATED = 201</code> (Spouse) may also
-apply, though are likely rare.</p>
+apply, though are likely rare. They are the provider, so they get
+(<code>cohabit_bin = 1</code>)</p>
 </div>
 <div id="related-1115-housemateroomate" class="section level4">
 <h4><code>RELATED = 1115</code>: Housemate/Roomate</h4>
@@ -2340,7 +2353,8 @@ could be approximated by searching for households with subfamilies.</p>
 </div>
 <div id="related-1242-foster-children" class="section level4">
 <h4><code>RELATED = 1242</code>: Foster children</h4>
-<p>A person with this status lives with a parent.</p>
+<p>A person with this status always lives with a parent with the parent
+as the provider (<code>cohabit_bin = 3</code>)</p>
 </div>
 <div id="related-1260-other-non-relatives" class="section level4">
 <h4><code>RELATED = 1260</code>: Other non-relatives</h4>
@@ -2358,7 +2372,8 @@ encoding means in practice.)</p>
 </div>
 <div id="related-1301-institutional-inmates" class="section level4">
 <h4><code>RELATED = 1301</code>: Institutional inmates</h4>
-<p>A person with this status does not live with a parent.</p>
+<p>A person with this status does not live with a parent.
+(<code>cohabit_bin = 9</code>)</p>
 <p>Note: Table 1 shows that there were 3.6 million institutional inmates
 recorded in IPUMS in 2022. The total prisoner population of the U.S. in
 2022 was just under 2 million. These other institutional inmates may

@@ -120,15 +120,17 @@ kable(hoh_status, caption = "Table 5: RELATED Values, as reported from 2012-2022
 
 We'll explore possible encodings using the `RELATED` value of the person we're observing. The following sections are organized by these `RELATED` encodings, in numeric order.
 
+We'll assign someone a cohabit_bin = 0 when a person is not living with a parent, 1 when they live with a parent but they are the provider, 2 if they live with a parent but neither child nor parent is the provider, 3 if they live with the parent as provider, and 9 if they live in a group setting.
+
 #### `RELATED = 101`: Head of household
 
-A person with this status lives with a parent if there is at least one person with the following `RELATED` values in the household:
+A person with this status lives with a parent as the provider (`cohabit_bin = 1`) if there is at least one person with the following `RELATED` values in the household:
 
 - `501`: Parent
 
 #### `RELATED = 201`: Spouse
 
-A person with this status lives with a parent if there is at least one person with the following `RELATED` values in the household:
+A person with this status lives with a parent as the provider (`cohabit_bin = 1`) if there is at least one person with the following `RELATED` values in the household:
 
 - `601`: Parent-in-Law
 
@@ -136,15 +138,15 @@ Note: This may be an undercount. Suppose the person has a relative living with t
 
 #### `RELATED = 301`: Child
 
-A person with this status always lives with a parent.
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
 
 #### `RELATED = 302`: Adopted Child
 
-A person with this status always lives with a parent.
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
 
 #### `RELATED = 303`: Stepchild
 
-A person with this status always lives with a parent.
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
 
 #### `RELATED = 401`: Child-in-law
 
@@ -168,13 +170,15 @@ A person with this status lives with a parent if there is at least one person wi
 
 - `501`: Parent
 
+They are not the provider, but the parent is not either, so they get (`cohabit_bin = 2`)
+
 #### `RELATED = 801`: Sibling-in-Law
 
 A person with this status lives with a parent if there is at least one person with the following `RELATED` values in the household:
 
 - `601`: Parent-in-Law
 
-Note that this may produce an overcount if the parent-in-law in residence is an unrelated parent-in-law to the sibling-in-law. However, this situation is probably rare.
+Note that this may produce an overcount if the parent-in-law in residence is an unrelated parent-in-law to the sibling-in-law. However, this situation is probably rare. They are not the provider, but the parent is not either, so they get (`cohabit_bin = 2`)
 
 #### `RELATED = 901`: Grandchild
 
@@ -182,7 +186,7 @@ A person with this status lives with a parent if there is at least one person wi
 
 - `301`: Child
 
-Note that this may produce an overcount if the child in residence is not the mother/father of the grandchild. However, this situation is likely rare (and unlikely to present itself in the target ages we are studying).
+Note that this may produce an overcount if the child in residence is not the mother/father of the grandchild. However, this situation is likely rare (and unlikely to present itself in the target ages we are studying). They are not the provider, but the parent is not either, so they get (`cohabit_bin = 2`)
 
 #### `RELATED = 1001`: Other Relatives
 
@@ -196,7 +200,7 @@ A person with this status lives with a parent if there is at least one person wi
 
 - `601`: Parent-in-Law
 
-Note: This may be an undercount, since someone may not call the parent of an unmarried spouse a "parent-in-law". Further caveats from the section related to `RELATED = 201` (Spouse) may also apply, though are likely rare.
+Note: This may be an undercount, since someone may not call the parent of an unmarried spouse a "parent-in-law". Further caveats from the section related to `RELATED = 201` (Spouse) may also apply, though are likely rare. They are the provider, so they get (`cohabit_bin = 1`)
 
 #### `RELATED = 1115`: Housemate/Roomate
 
@@ -212,7 +216,7 @@ Note that this may produce an undercount. Multiple "Subfamilies" as defined by C
 
 #### `RELATED = 1242`: Foster children
 
-A person with this status lives with a parent.
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
 
 #### `RELATED = 1260`: Other non-relatives
 
@@ -228,7 +232,7 @@ A person with this status does not live with a parent.
 
 #### `RELATED = 1301`: Institutional inmates
 
-A person with this status does not live with a parent.
+A person with this status does not live with a parent. (`cohabit_bin = 9`)
 
 Note: Table 1 shows that there were 3.6 million institutional inmates recorded in IPUMS in 2022. The total prisoner population of the U.S. in 2022 was just under 2 million. These other institutional inmates may include military living in barracks, individuals living in group living facilities like nursing homes, and potentially individuals in mental health care facilities. We will have to read more IPUMS documentation to ascertain what this encoding means in practice.
 

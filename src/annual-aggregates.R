@@ -55,7 +55,7 @@ cohabit_2022_with_percents <- cohabit_2022_with_percents %>%
   mutate(
     AGE_bucket = factor(AGE_bucket, levels = c("Under 16", "16-17", "17-18", "18-19", "20-21", 
                                                "22-23", "24-25", "26-27", "28-29", "30+")),
-    cohabit_bin = factor(cohabit_bin, levels = c(0, 1, 2, NA))  # Ensure cohabit_bin is a factor
+    cohabit_bin = factor(cohabit_bin, levels = c(0, 1, 2, 3, 9))  # Ensure cohabit_bin is a factor
   )
 
 # Create a stacked bar chart where each AGE_bucket is 100%
@@ -70,10 +70,12 @@ ggplot(cohabit_2022_with_percents, aes(x = AGE_bucket, y = percent, fill = cohab
   ) +
   # Customize the legend labels
   scale_fill_manual(
-    values = c("0" = "lightblue", "1" = "lightgreen", "2" = "lightcoral"),
+    values = c("0" = "white", "1" = "#075792", "2" = "#1e81b0", "3" = "#46b1d5", "9" = "lightcoral"),
     labels = c("0" = "Not living with parents",
-               "1" = "Living with at least 1 parent",
-               "2" = "Living in institution")
+               "1" = "Child provides for parent",
+               "2" = "Both child and parent are dependent",
+               "3" = "Child depends on parent",
+               "9" = "Living in institution")
   ) +
   geom_text(
     aes(label = scales::percent(percent / 100, accuracy = 0.1)), 
@@ -96,7 +98,7 @@ cohabit_2012_with_percents <- cohabit_2012_with_percents %>%
   mutate(
     AGE_bucket = factor(AGE_bucket, levels = c("Under 16", "16-17", "17-18", "18-19", "20-21", 
                                                "22-23", "24-25", "26-27", "28-29", "30+")),
-    cohabit_bin = factor(cohabit_bin, levels = c(0, 1, 2, NA))  # Ensure cohabit_bin is a factor
+    cohabit_bin = factor(cohabit_bin, levels = c(0, 1, 2, 3, 9))  # Ensure cohabit_bin is a factor
   )
 
 # Create a stacked bar chart where each AGE_bucket is 100%
@@ -111,10 +113,12 @@ ggplot(cohabit_2012_with_percents, aes(x = AGE_bucket, y = percent, fill = cohab
   ) +
   # Customize the legend labels
   scale_fill_manual(
-    values = c("0" = "lightblue", "1" = "lightgreen", "2" = "lightcoral"),
+    values = c("0" = "white", "1" = "#075792", "2" = "#1e81b0", "3" = "#46b1d5", "9" = "lightcoral"),
     labels = c("0" = "Not living with parents",
-               "1" = "Living with at least 1 parent",
-               "2" = "Living in institution")
+               "1" = "Child provides for parent",
+               "2" = "Both child and parent are dependent",
+               "3" = "Child depends on parent",
+               "9" = "Living in institution")
   ) +
   geom_text(
     aes(label = scales::percent(percent / 100, accuracy = 0.1)), 
