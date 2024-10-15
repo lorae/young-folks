@@ -24,6 +24,7 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
 ipums_relate <- tbl(con, "ipums_relationships") 
 
+
 cohabit_2022_with_percents <- crosstab_percent(
   data = ipums_relate |> filter(YEAR == 2022),
   weight = "PERWT",

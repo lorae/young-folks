@@ -50,6 +50,7 @@ ipums_final <- ipums_with_counts |>
           RELATED == 303 ~ 1,
           RELATED == 401 ~ 0,
           RELATED == 501 ~ 0,
+          RELATED == 601 ~ 0,
           RELATED == 701 ~ if_else(count_RELATED_501 > 0, 1, 0),
           RELATED == 801 ~ if_else(count_RELATED_601 > 0, 1, 0),
           RELATED == 901 ~ if_else(count_RELATED_301 > 0, 1, 0),
