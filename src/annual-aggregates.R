@@ -11,6 +11,8 @@ library("dplyr")
 library("duckdb")
 library("ipumsr")
 library("readr")
+library("tidyr")
+library("ggplot2")
 
 # ----- Step 1: Source helper functions ----- #
 
@@ -20,36 +22,32 @@ devtools::load_all("../dataduck")
 
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
-ipums_relate <- tbl(con, "ipums_relationships")
+ipums_relate <- tbl(con, "ipums_relationships") 
 
-# An initial crosstab of the rate of cohabitation by age bucket
-cohabit_2022 <- crosstab_count(
+cohabit_2022_with_percents <- crosstab_percent(
   data = ipums_relate |> filter(YEAR == 2022),
-  weight_column = "PERWT",
-  group_by_columns = c("AGE_bucket", "cohabit_bin")
+  weight = "PERWT",
+  group_by = c("AGE_bucket", "cohabit_bin"),
+  percent_group_by = c("AGE_bucket"),
+  every_combo = FALSE
 ) |> 
-  collect() |>
-  arrange(AGE_bucket, cohabit_bin)
+  arrange(AGE_bucket, cohabit_bin) |>
+  collect()
 
-crosstab_percents <- function(data, group_by, counts) {
-  data %>%
-    group_by(across(all_of(group_by))) %>%   # Group by the specified columns
-    mutate(
-      percent = 100 * (!!sym(counts)) / sum(!!sym(counts), na.rm = TRUE)   # Calculate percentage within each group
-    ) %>%
-    ungroup()  # Ungroup to return the full data frame
-}
+cohabit_2012_with_percents <- crosstab_percent(
+  data = ipums_relate |> filter(YEAR == 2012),
+  weight = "PERWT",
+  group_by = c("AGE_bucket", "cohabit_bin"),
+  percent_group_by = c("AGE_bucket"),
+  every_combo = FALSE
+) |> 
+  arrange(AGE_bucket, cohabit_bin) |>
+  collect()
 
-# Example usage with your data frame:
-cohabit_2022_with_percents <- crosstab_percents(
-  data = cohabit_2022, 
-  group_by = "AGE_bucket", 
-  counts = "count"
-)
 
-print(cohabit_2022_with_percents)
+# ----- Plotting ----- #
 
-library(ggplot2)
+# 2022
 
 # Define the correct order for AGE_bucket and create the plot
 cohabit_2022_with_percents <- cohabit_2022_with_percents %>%
@@ -91,27 +89,6 @@ ggplot(cohabit_2022_with_percents, aes(x = AGE_bucket, y = percent, fill = cohab
 ggsave("results/cohabitation_by_age_2022.png", width = 6.5, height = 5, units = "in")
 
 ##### 2012
-
-# An initial crosstab of the rate of cohabitation by age bucket
-cohabit_2012 <- crosstab_count(
-  data = ipums_relate |> filter(YEAR == 2012),
-  weight_column = "PERWT",
-  group_by_columns = c("AGE_bucket", "cohabit_bin")
-) |> 
-  collect() |>
-  arrange(AGE_bucket, cohabit_bin)
-
-
-# Example usage with your data frame:
-cohabit_2012_with_percents <- crosstab_percents(
-  data = cohabit_2012, 
-  group_by = "AGE_bucket", 
-  counts = "count"
-)
-
-print(cohabit_2012_with_percents)
-
-library(ggplot2)
 
 # Define the correct order for AGE_bucket and create the plot
 cohabit_2012_with_percents <- cohabit_2012_with_percents %>%
