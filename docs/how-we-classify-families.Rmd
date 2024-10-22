@@ -1,0 +1,250 @@
+---
+title: "How We Classify Families"
+output: 
+  html_document:
+    self_contained: true
+    toc: true         # Enable the table of contents
+    toc_float: true   # Make the table of contents float
+    number_sections: false
+---
+
+```{r init, echo = FALSE, message=FALSE, warning=FALSE}
+library("knitr")
+library("dplyr")
+```
+
+# Introduction
+
+This document outlines the methodology and logic used to produce family relationships and categorize households in our analysis. We will explain the criteria and processes applied to classify different household types and head of household status.
+
+# Classification
+
+IPUMS provides detailed information on the relationships between individuals in a household through its `RELATED` variable. [The person who owns / pays rent on the property of residence,](https://www2.census.gov/programs-surveys/acs/methodology/questionnaires/2024/quest24.pdf) is typically designated the "head of household" or "person 1". ("Head of household" has fallen out of use by the Census, as it used to specifically designate men. The new terminology is intended to be more gender inclusive. In this document, we use them interchangeably.) This person receives the code of `101` in the `RELATED` variable. All other individuals in the same household unit are then assigned codes based on their relationship with this person. The following table is a summary of these statuses as they appeared in the 2022 1-year American Community Survey, sorted from most frequently reported to least frequently reported. The `count` column represents the raw number of respondents with that code. The `sum_weights` column represents the total number of people in the United States estimated to have that status by weighting the respondents using their `PERWT` values.
+
+```{r tab01, echo=FALSE, message=FALSE, warning=FALSE}
+hoh_status_2022 <- read.csv("../results/hoh_status_2022.csv")
+kable(hoh_status_2022, caption = "Table 1: 2022 RELATED Values")
+```
+
+To validate the data, we can sum the `sum_weights` column, which should equal the total U.S. population in 2022. This sum is `r sum(hoh_status_2022$sum_weights)`, matching the reported population of 333.3 million in this year.
+
+The following table expands upon "2022 RELATED Values" by showing unique answers from all year 2012 to 2022. This table has additional entry (`RELATE = 1241`: "Roomers/boarders/lodgers) not present in the 2022 dataset, and will be used as a reference for variable encoding in later sections of this document.
+
+```{r tab02, echo=FALSE}
+hoh_status <- read.csv("../results/hoh_status.csv")
+kable(hoh_status, caption = "Table 2: RELATED Values, as reported from 2012-2022")
+```
+
+Accurately identifying individuals living with their parents presents some challenges. In this analysis, we focus on parents only (though future work may include parents-in-law). When a person is designated as "person 1" or "head of household" (`RELATED = 101`), identifying parents is relatively straightforward: we look for individuals in the household with `RELATED` codes of `501` ("parent"). For example consider the hypothetical household in Table 3a:
+
+```{r tab03a, echo=FALSE}
+hypothetical_data <- data.frame(
+  pers_id = 1:5,
+  hh_id = rep(1, 5),
+  RELATED = c(101, 501, 501, 301, 301),
+  RELATED_name = c("Head of Household", "Parent", "Parent", "Child", "Child"),
+  AGE = c(26, 51, 52, 0, 2),
+  SEX = c("F", "F", "M", "M", "M")
+)
+kable(hypothetical_data, caption = "Table 3a: Hypothetical Multigenerational Household")
+```
+
+In this household, a single mother lives with her two parents and her two children. In our `cohabit_parent` column, we assign values as follows:
+
+```{r tab03b, echo=FALSE}
+hypothetical_data$cohabit_parent <- c(2, 0, 0, 1, 1)
+kable(hypothetical_data, caption = "Table 3b: Hypothetical Multigenerational Household")
+```
+
+Note that this variable is designed to represent the number of parents an individual lives with, which is why the variable is encoded as `2` for our single mother and `1` for her two children. If we later prefer to splice the data as a binary indicator variable, it is simple enough to encode all positive numbers as a `1` (`True`) value and all zeroes as a `0` (`False`) value.
+
+## Complicating Cases
+
+American families are not always so straightforward.For example, consider the household defined in Table 4a:
+
+```{r tab04a, echo=FALSE}
+hypothetical_data <- data.frame(
+  pers_id = 1:3,
+  hh_id = rep(2, 3),
+  RELATED = c(101, 1114, 301),
+  RELATED_name = c("Head of Household", "Unmarried Partner", "Child"),
+  AGE = c(60, 62, 20),
+  SEX = c("F", "M", "M"),
+  cohabit_parent = c("0", "0", "1 or 2?"),
+  cohabit_parent_binary = c("False", "False", "True")
+)
+kable(hypothetical_data, caption = "Table 4a: Unmarried Spouse and Adult Child")
+```
+
+In this example, we're able to classify the 20-year old young adult as living with at least one parent - in this case, the head of household. Should we also count the unmarried partner as an additional parent? This question is highly contextual and unlikely to be answerable given our limited information. It is also highly cultural.
+
+We may breathe a sigh of relief that regardless of the answer, at least our `cohabit_parent_binary` column is unchanged: it still equals `True`, whether or not we classify the unmarried spouse of the child's mother as an additional parent. But our ability to discern this parenthood could be easily complicated if the same household had answered the survey differently:
+
+```{r tab04b, echo=FALSE}
+hypothetical_data <- data.frame(
+  pers_id = 1:3,
+  hh_id = rep(2, 3),
+  RELATED = c("101", "1114", "303? 1001? or 1260?"),
+  RELATED_name = c("Head of Household", "Unmarried Partner", "Stepchild? Other Relative? or Other Non-Relative?"),
+  AGE = c(62, 60, 20),
+  SEX = c("M", "F", "M"),
+  cohabit_parent = c("0", "0", "0, 1, or 2?"),
+  cohabit_parent_binary = c("False", "False", "False or True?")
+)
+kable(hypothetical_data, caption = "Table 4b: Unmarried Spouse and Adult Child")
+```
+
+The only difference between Tables 4a and 4b are the person who filled out the survey. Because all relationships are classified through the head of household, our visibility into the relationship between two other housemates can be complicated by their relationship with the head of household. In this example, it's likely that the 62-year-old head of household might list the 20-year-old son of his spouse as his stepchild. But since him and his spouse are not technically married, he also might list this son as an "Other Relative" or "Other Non-Relative". In this case, we may accidentally fail to code the son as living with a parent.
+
+These nuances cannot be eliminated. However, we can later run sensitivity analyses to various bucketing schemes to calculate the scope of our potential error. 
+
+In the following section, we define our current parental cohabitation strategy.
+
+# Classifying families: the current methodology
+
+With the caveats above, let's get down to defining how we classify parental cohabitation. The binary variable for the same concept will be designated `cohabit_bin`.
+
+Note some general rules of thumb:
+
+- Children, adopted children, foster children, and stepchildren are all equally counted as children.
+- The spouse of a parent is also a parent.
+- The unmarried partner of a parent is also a parent.
+
+Here are the variable encodings:
+
+```{r tab05, echo=FALSE}
+hoh_status <- hoh_status |> 
+  arrange(RELATED) 
+kable(hoh_status, caption = "Table 5: RELATED Values, as reported from 2012-2022")
+```
+
+We'll explore possible encodings using the `RELATED` value of the person we're observing. The following sections are organized by these `RELATED` encodings, in numeric order.
+
+We'll assign someone a cohabit_bin = 0 when a person is not living with a parent, 1 when they live with a parent but they are the provider, 2 if they live with a parent but neither child nor parent is the provider, 3 if they live with the parent as provider, and 9 if they live in a group setting.
+
+#### `RELATED = 101`: Head of household
+
+A person with this status lives with a parent as the provider (`cohabit_bin = 1`) if there is at least one person with the following `RELATED` values in the household:
+
+- `501`: Parent
+
+#### `RELATED = 201`: Spouse
+
+A person with this status lives with a parent as the provider (`cohabit_bin = 1`) if there is at least one person with the following `RELATED` values in the household:
+
+- `601`: Parent-in-Law
+
+Note: This may be an undercount. Suppose the person has a relative living with them who is the unmarried spouse of their parent. Then that relative would not be counted, if the parent were not also present in the household.
+
+#### `RELATED = 301`: Child
+
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
+
+#### `RELATED = 302`: Adopted Child
+
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
+
+#### `RELATED = 303`: Stepchild
+
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
+
+#### `RELATED = 401`: Child-in-law
+
+This is tricky. There is no common term for the parents of your child in-law, except, perhaps, a generic term like "in-laws". "Other Relatives" (`1001`) or "Other non-relatives" (`1260`) might encode these hypothetical individuals, but the arrangement is likely uncommon.
+
+For now, we encode a person with this status as *not* living with a parent, understanding that this may not always be true.
+
+#### `RELATED = 501`: Parent
+
+A person who is a parent of a head of household *could* also be living with their own parent if a grandparent is also present in the household. However, this is not guaranteed, since the grandparent could be through the head of household's other parent. Also, there is no `RELATED` variable for grandparent. The closest we could get would be `Other Relatives`.
+
+For now, we encode a person with this status as *not* living with a parent, understanding that this may not always be true.
+
+#### `RELATED = 601`: Parent-in-Law
+
+Using the same logic as in `RELATED = 501` (Parent), we classify this person as *not* living with a parent, understanding that this may not always be true.
+
+#### `RELATED = 701`: Sibling
+
+A person with this status lives with a parent if there is at least one person with the following `RELATED` values in the household:
+
+- `501`: Parent
+
+They are not the provider, but the parent is not either, so they get (`cohabit_bin = 2`)
+
+#### `RELATED = 801`: Sibling-in-Law
+
+A person with this status lives with a parent if there is at least one person with the following `RELATED` values in the household:
+
+- `601`: Parent-in-Law
+
+Note that this may produce an overcount if the parent-in-law in residence is an unrelated parent-in-law to the sibling-in-law. However, this situation is probably rare. They are not the provider, but the parent is not either, so they get (`cohabit_bin = 2`)
+
+#### `RELATED = 901`: Grandchild
+
+A person with this status lives with a parent if there is at least one person with the following `RELATED` values in the household:
+
+- `301`: Child
+
+Note that this may produce an overcount if the child in residence is not the mother/father of the grandchild. However, this situation is likely rare (and unlikely to present itself in the target ages we are studying). They are not the provider, but the parent is not either, so they get (`cohabit_bin = 2`)
+
+#### `RELATED = 1001`: Other Relatives
+
+A person with this status does not live with a parent.
+
+Note that this may produce an undercount. Two "Other Relatives" in the same household could have a parent-child relationship. Future crosstabs can estimate the upper bound of this potential misclassification, which is probably rare.
+
+#### `RELATED = 1114`: Unmarried Partner
+
+A person with this status lives with a parent if there is at least one person with the following `RELATED` values in the household:
+
+- `601`: Parent-in-Law
+
+Note: This may be an undercount, since someone may not call the parent of an unmarried spouse a "parent-in-law". Further caveats from the section related to `RELATED = 201` (Spouse) may also apply, though are likely rare. They are the provider, so they get (`cohabit_bin = 1`)
+
+#### `RELATED = 1115`: Housemate/Roomate
+
+A person with this status does not live with a parent.
+
+Note that this may produce an undercount. Multiple "Subfamilies" as defined by Census, may be present in a household with a housemate/roommate relationship. The scope of this potential undercount could be approximated by searching for households with subfamilies.
+
+#### `RELATED = 1241`: Roomers/boarders/lodgers
+
+A person with this status does not live with a parent.
+
+Note that this may produce an undercount. Multiple "Subfamilies" as defined by Census, may be present in a household with a housemate/roommate relationship. The scope of this potential undercount could be approximated by searching for households with subfamilies.
+
+#### `RELATED = 1242`: Foster children
+
+A person with this status always lives with a parent with the parent as the provider (`cohabit_bin = 3`)
+
+#### `RELATED = 1260`: Other non-relatives
+
+A person with this status does not live with a parent.
+
+Note that this may produce an undercount. Multiple "Subfamilies" as defined by Census, may be present in a household with a housemate/roommate relationship. The scope of this potential undercount could be approximated by searching for households with subfamilies.
+
+#### `RELATED = 1270`: Non-inmate 1990
+
+A person with this status does not live with a parent.
+
+(We will have to read more IPUMS documentation to ascertain what this encoding means in practice.)
+
+#### `RELATED = 1301`: Institutional inmates
+
+A person with this status does not live with a parent. (`cohabit_bin = 9`)
+
+Note: Table 1 shows that there were 3.6 million institutional inmates recorded in IPUMS in 2022. The total prisoner population of the U.S. in 2022 was just under 2 million. These other institutional inmates may include military living in barracks, individuals living in group living facilities like nursing homes, and potentially individuals in mental health care facilities. We will have to read more IPUMS documentation to ascertain what this encoding means in practice.
+
+# Next Steps
+
+For each of the abovementioned rules, we'll quantify the number of additional observations of `cohabit_bin` it produces. This will help us determine the sensitivity of our results to our definitions of parenthood. 
+
+We'll also consider defining parenthood more strictly or more loosely, and quantify the difference in counts these alternative classifications make. For example:
+
+- Looser definition: parents-in-law are also classified as parents.
+- Stricter definition: foster parents are not parents; unmarried spouses of parents are not parents; stepparents are not parents.
+
+If misclassification appears to be a serious issue, more attention could be taken to accurately classify parenthood: for example, using relative ages of household members or IPUMS subfamilily variables.
+
+
