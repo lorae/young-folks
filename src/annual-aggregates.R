@@ -24,26 +24,57 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
 ipums_relate <- tbl(con, "ipums_relationships") 
 
-
 cohabit_2022_with_percents <- crosstab_percent(
   data = ipums_relate |> filter(YEAR == 2022),
   weight = "PERWT",
   group_by = c("AGE_bucket", "cohabit_bin"),
   percent_group_by = c("AGE_bucket"),
-  every_combo = FALSE
+  every_combo = TRUE,
+  repwts = paste0("REPWTP", sprintf("%d", 1:80))
 ) |> 
-  arrange(AGE_bucket, cohabit_bin) |>
-  collect()
+  arrange(AGE_bucket, cohabit_bin)
 
 cohabit_2012_with_percents <- crosstab_percent(
   data = ipums_relate |> filter(YEAR == 2012),
   weight = "PERWT",
   group_by = c("AGE_bucket", "cohabit_bin"),
   percent_group_by = c("AGE_bucket"),
-  every_combo = FALSE
+  every_combo = TRUE,
+  repwts = paste0("REPWTP", sprintf("%d", 1:80))
 ) |> 
-  arrange(AGE_bucket, cohabit_bin) |>
-  collect()
+  arrange(AGE_bucket, cohabit_bin)
+
+
+# Create a function to compare percentages between two years
+compare_percent_changes <- function(df1, df2) {
+  # Merge the two datasets by AGE_bucket and cohabit_bin to ensure comparison on the same groups
+  comparison <- df1 %>%
+    inner_join(df2, by = c("AGE_bucket", "cohabit_bin"), suffix = c("_2012", "_2022")) %>%
+    rowwise() %>%
+    mutate(
+      # Calculate the difference in percentages
+      percent_difference = percent_2022 - percent_2012,
+      
+      # Calculate the combined standard error
+      combined_standard_error = sqrt(percent_standard_error_2022^2 + percent_standard_error_2012^2),
+      
+      # Calculate the z-score
+      z_score = percent_difference / combined_standard_error,
+      
+      # Determine if the change is statistically significant
+      significant_change = ifelse(abs(z_score) > 1.96, "Significant", "Not Significant")
+    ) %>%
+    ungroup() %>%
+    select(AGE_bucket, cohabit_bin, percent_2012, percent_2022, percent_difference, combined_standard_error, z_score, significant_change)
+  
+  return(comparison)
+}
+
+# Assuming cohabit_2012_with_percents and cohabit_2022_with_percents are your dataframes
+result <- compare_percent_changes(cohabit_2012_with_percents, cohabit_2022_with_percents)
+
+# Print the result
+print(result)
 
 
 # ----- Plotting ----- #
