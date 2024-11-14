@@ -164,6 +164,13 @@ result$own_age_cohab_2022_se <- list(
   data = own_age_cohab_2022_se
 )
 
+save(result, file = "shiny-app/data.rda")
+
+
+###############################
+# Old code that isn't guaranteed to work anymore 
+###############################
+
 # ----- Step 3: Compute percentage cohabitation in 2022 and 2012 ----- #
 cohabit_2022_se <- estimate_with_bootstrap_se(
   data = ipums_relate |> filter(YEAR == 2022),
