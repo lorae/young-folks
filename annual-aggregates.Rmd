@@ -86,6 +86,7 @@ library("readr")
 library("tidyr")
 library("ggplot2")
 library("knitr")
+library("purrr")
 
 # ----- Step 1: Source helper functions ----- #
 
@@ -97,29 +98,72 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 ipums_relate <- tbl(con, "ipums_relationships") 
 
 # Calculate percentages for 2022 and 2012
-cohabit_2022_with_percents <- crosstab_percent(
+cohabit_2022_with_percents <- estimate_with_bootstrap_se(
   data = ipums_relate |> filter(YEAR == 2022),
-  weight = "PERWT",
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin"),
   group_by = c("AGE_bucket", "cohabit_bin"),
   percent_group_by = c("AGE_bucket"),
-  every_combo = TRUE,
-  repwts = paste0("REPWTP", sprintf("%d", 1:80))
+  every_combo = TRUE
 ) |>
-  arrange(AGE_bucket, cohabit_bin) |>
-  mutate(cohabit_bin = factor(cohabit_bin, levels = c(0, 1, 2, 3, 9)),
-         AGE_bucket = factor(AGE_bucket, levels = c("Under 16", "16-17", "17-18", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")))
+  mutate(
+    cohabit_bin = factor(
+      cohabit_bin, 
+      levels = c(0, 1, 2, 3, 9)
+      ),
+    AGE_bucket = factor(
+      AGE_bucket, 
+      levels = 
+        c("Under 16", 
+          "16-17", 
+          "17-18", 
+          "18-19", 
+          "20-21", 
+          "22-23", 
+          "24-25", 
+          "26-27", 
+          "28-29", 
+          "30+")
+      )) |>
+  arrange(AGE_bucket, cohabit_bin)
 
-cohabit_2012_with_percents <- crosstab_percent(
-  data = ipums_relate |> filter(YEAR == 2012),
-  weight = "PERWT",
+
+cohabit_2012_with_percents <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin"),
   group_by = c("AGE_bucket", "cohabit_bin"),
   percent_group_by = c("AGE_bucket"),
-  every_combo = TRUE,
-  repwts = paste0("REPWTP", sprintf("%d", 1:80))
-) |>   
-  arrange(AGE_bucket, cohabit_bin) |>
-  mutate(cohabit_bin = factor(cohabit_bin, levels = c(0, 1, 2, 3, 9)),
-         AGE_bucket = factor(AGE_bucket, levels = c("Under 16", "16-17", "17-18", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")))
+  every_combo = TRUE
+) |>
+  mutate(
+    cohabit_bin = factor(
+      cohabit_bin, 
+      levels = c(0, 1, 2, 3, 9)
+      ),
+    AGE_bucket = factor(
+      AGE_bucket, 
+      levels = 
+        c("Under 16", 
+          "16-17", 
+          "17-18", 
+          "18-19", 
+          "20-21", 
+          "22-23", 
+          "24-25", 
+          "26-27", 
+          "28-29", 
+          "30+")
+      )) |>
+  arrange(AGE_bucket, cohabit_bin)
 ```
 
 Statistical Comparison
@@ -133,7 +177,7 @@ compare_percent_changes <- function(df1, df2) {
     rowwise() %>%
     mutate(
       percent_difference = percent_2022 - percent_2012,
-      combined_standard_error = sqrt(percent_standard_error_2022^2 + percent_standard_error_2012^2),
+      combined_standard_error = sqrt(se_percent_2022^2 + se_percent_2012^2),
       z_score = percent_difference / combined_standard_error,
       p_value = 2 * pnorm(-abs(z_score)),  # Two-tailed p-value calculation
       significant_change = ifelse(abs(z_score) > 1.96, "Significant", "Not Significant")

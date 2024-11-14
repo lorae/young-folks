@@ -13,16 +13,119 @@ library("ipumsr")
 library("readr")
 library("tidyr")
 library("ggplot2")
+library("purrr")
 
 # ----- Step 1: Source helper functions ----- #
 
 devtools::load_all("../dataduck")
 
-# ----- Step 2: Import and wrangle data ----- #
+# ----- Step 2: Import data ----- #
 
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
 ipums_relate <- tbl(con, "ipums_relationships") 
+
+# ----- Step 3: See what fraction of America falls under each ownership structure ----- #
+ownership_labels <- c(
+  "0"  = "N/A",
+  "12" = "Owned free and clear",
+  "13" = "Owned with mortgage or loan",
+  "21" = "No cash rent",
+  "22" = "With cash rent"
+)
+
+own_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("OWNERSHPD"),
+  group_by = c("OWNERSHPD"),
+  percent_group_by = c(),
+  every_combo = TRUE
+) |>
+  arrange(OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),            # Convert to character
+      levels = names(ownership_labels),   # Use character levels
+      labels = ownership_labels           # Assign corresponding labels
+    )
+  )
+
+own_2012_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2012),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("OWNERSHPD"),
+  group_by = c("OWNERSHPD"),
+  percent_group_by = c(),
+  every_combo = TRUE
+) |>
+  arrange(OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),            # Convert to character
+      levels = names(ownership_labels),   # Use character levels
+      labels = ownership_labels           # Assign corresponding labels
+    )
+  )
+
+print(own_2012_se)
+print(own_2022_se)
+
+# Save these summary tables into result
+result <- list(
+  own_2012_se = list(
+    desc = "A table describing the fraction of Americans in 2012 by homeowner and renter status.",
+    data = own_2012_se
+  ),
+  own_2022_se = list(
+    desc = "A table describing the fraction of Americans in 2022 by homeowner and renter status.",
+    data = own_2022_se
+  )
+)
+
+# ----- Step 3: Compute percentage cohabitation in 2022 and 2012 ----- #
+cohabit_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin"),
+  group_by = c("AGE_bucket", "cohabit_bin"),
+  percent_group_by = c("AGE_bucket"),
+  every_combo = TRUE
+) |>
+  mutate(
+    cohabit_bin = factor(
+      cohabit_bin, 
+      levels = c(0, 1, 2, 3, 9)
+    ),
+    AGE_bucket = factor(
+      AGE_bucket, 
+      levels = 
+        c("Under 16", 
+          "16-17", 
+          "17-18", 
+          "18-19", 
+          "20-21", 
+          "22-23", 
+          "24-25", 
+          "26-27", 
+          "28-29", 
+          "30+")
+    )) |>
+  arrange(AGE_bucket, cohabit_bin)
+
+
 
 cohabit_2022_with_percents <- crosstab_percent(
   data = ipums_relate |> filter(YEAR == 2022),
