@@ -3,7 +3,8 @@
 # Track rates of young adults living with parents from 2012 to 2022.
 # Input: data/db/ipums-processed.duckdb
 # Output: 
-# - list here
+# - data.rda in shiny-app folder, used to populated app.R with data
+#   for visualizations
 # - ...
 
 # ----- Step 0: Load packages ----- #
