@@ -25,7 +25,7 @@ con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
 ipums_relate <- tbl(con, "ipums_relationships") 
 
-# ----- Step 3: See what fraction of America falls under each ownership structure ----- #
+# ----- Step 3: Initialize labels ----- #
 ownership_labels <- c(
   "0"  = "N/A",
   "12" = "Owned free and clear",
@@ -34,6 +34,15 @@ ownership_labels <- c(
   "22" = "With cash rent"
 )
 
+cohabit_labels <- c(
+  "0" = "Not living with parents", 
+  "1" = "Child provides for parent", 
+  "2" = "Both child and parent are dependent", 
+  "3" = "Child depends on parent", 
+  "9" = "Living in institution"
+)
+
+# ----- Step 4: See what fraction of America falls under each ownership structure ----- #
 own_2022_se <- estimate_with_bootstrap_se(
   data = ipums_relate |> filter(YEAR == 2022),
   f = crosstab_percent,
@@ -89,6 +98,70 @@ result <- list(
     desc = "A table describing the fraction of Americans in 2022 by homeowner and renter status.",
     data = own_2022_se
   )
+)
+
+# ----- Step 5: Tabulate cohabitation by age and homeowner/renter status ----- #
+own_age_cohab_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "OWNERSHPD"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+own_age_cohab_2012_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2012),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "OWNERSHPD"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+# Save these summary tables into result
+result$own_age_cohab_2012_se <- list(
+  desc = "A table describing the fraction of Americans in 2012 by age, cohabitation status, and homeowner/renter status. Values within a given age and homeowner/renter status add up to 100.",
+  data = own_age_cohab_2012_se
+)
+
+result$own_age_cohab_2022_se <- list(
+  desc = "A table describing the fraction of Americans in 2022 by age, cohabitation status, and homeowner/renter status. Values within a given age and homeowner/renter status add up to 100.",
+  data = own_age_cohab_2022_se
 )
 
 # ----- Step 3: Compute percentage cohabitation in 2022 and 2012 ----- #
