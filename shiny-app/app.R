@@ -63,39 +63,16 @@ server <- function(input, output, session) {
   
   # Table 1: Render theoretical example table
   output$table1 <- renderDT({
-    example_table <- data.frame(
-      group = c("White", "Hispanic"),
-      perc_2005 = c(80, 20),
-      perc_2022 = c(70, 30),
-      hhsize_2005 = c(3.5, 5),
-      hhsize_2022 = c(3.8, 4)
-    ) |>
-      mutate(
-        cont_2005 = perc_2005 * hhsize_2005 / 100,
-        cont_2022 = perc_2022 * hhsize_2022 / 100,
-        cont_2022cf = perc_2022 * hhsize_2005 / 100,
-        cont_diff = cont_2022 - cont_2022cf
-      )
     
-    sum_row <- example_table |>
-      summarize(
-        group = "Sum",
-        perc_2005 = sum(perc_2005),
-        perc_2022 = sum(perc_2022),
-        hhsize_2005 = NA,
-        hhsize_2022 = NA,
-        cont_2005 = sum(cont_2005),
-        cont_2022 = sum(cont_2022),
-        cont_2022cf = sum(cont_2022cf),
-        cont_diff = sum(cont_diff)
-      )
+    own_2012_se <- result$own_2012_se$data |>
+      mutate(year = 2012)
     
-    example_table <- bind_rows(example_table, sum_row) |>
-      # TODO: divide percentages by 100 upstream in the code
-      mutate(
-        perc_2005 = perc_2005 /100,
-        perc_2022 = perc_2022 / 100
-      ) |>
+    own_2022_se <- result$own_2022_se$data |>
+      mutate(year = 2022)
+    
+    example_table <- bind_rows(
+      own_2012_se, 
+      own_2022_se) 
       
       datatable(
         example_table,
@@ -105,26 +82,9 @@ server <- function(input, output, session) {
           dom = 't',
           ordering = FALSE
         ),
-        rownames = FALSE,
-        colnames = c(
-          "Group" = "group",
-          "Percent of 2005 Population" = "perc_2005",
-          "Percent of 2022 Population" = "perc_2022",
-          "Average HH Size (2005)" = "hhsize_2005",
-          "Average HH Size (2022)" = "hhsize_2022",
-          "Actual Contribution (2005)" = "cont_2005",
-          "Actual Contribution (2022)" = "cont_2022",
-          "Counterfactual Contribution (2022)" = "cont_2022cf",
-          "Difference from Counterfactual (2022)" = "cont_diff"
-        )
+        rownames = FALSE
       ) |>
-      formatStyle(
-        "Group",
-        target = "row",
-        fontWeight = styleEqual("Sum", "bold")
-      ) |>
-      formatRound("Difference from Counterfactual (2022)", digits = 2) |>
-      formatPercentage(c("Percent of 2005 Population", "Percent of 2022 Population"), digits = 0)
+      formatPercentage(c("percent"), digits = 0)
   })
 }
 
