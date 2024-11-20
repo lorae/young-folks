@@ -12,35 +12,47 @@ load("data.rda")
 
 # Define a helper function for a stacked bar chart
 stacked_bar_plotly <- function(data, title = "Default title") {
-  p <- ggplot(data, aes(x = AGE_bucket, y = percent, fill = cohabit_bin, text = paste(
-    "Age Group:", AGE_bucket, "<br>",
-    "Cohabit Bin:", cohabit_bin, "<br>",
-    "Percent:", percent, "%<br>",
-    "Count:", count
-  ))) +
-    geom_bar(stat = "identity", position = "fill") +
-    scale_y_continuous(labels = scales::percent_format()) +
-    labs(
-      title = title,
-      x = "Age Group",
-      y = "Percentage",
-      fill = "Cohabit Bin"
-    ) +
-    scale_fill_manual(values = c(
+  plot_ly(
+    data |> 
+      mutate(
+        # TODO: turn this into factor at data processing stage
+        AGE_bucket = factor(
+          AGE_bucket,
+          levels = c("Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")
+        ),
+        # TODO: consider refactoring at data processing stage
+        cohabit_bin = forcats::fct_rev(cohabit_bin)
+      ),
+    x = ~AGE_bucket,
+    y = ~percent/100,
+    type = 'bar',
+    color = ~cohabit_bin,
+    colors = c(
       "Not living with parents" = "white",
-      "Child provides for parent" = "#075792",
+      "Child provides for parent" = "#46b1d5",
       "Both child and parent are dependent" = "#1e81b0",
-      "Child depends on parent" = "#46b1d5",
+      "Child depends on parent" = "#075792",
       "Living in institution" = "lightcoral"
-    )) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      legend.position = "bottom"
+    ),
+    text = ~paste(
+      "Age Group:", AGE_bucket, "<br>",
+      "Cohabit Bin:", cohabit_bin, "<br>",
+      "Percent:", scales::percent(percent / 100, accuracy = 0.1), "<br>",
+      "Count:", count
+    ),
+    hoverinfo = "text",
+    marker = list(line = list(color = 'black', width = 1)),
+    showlegend = FALSE
+  ) |>
+    layout(
+      barmode = 'stack',
+      title = title,
+      xaxis = list(title = "Age Group"),
+      yaxis = list(title = "Percentage", tickformat = ".0%")#,
+      #legend = list(title = list(text = "Cohabit Bin"))
     )
-  
-  ggplotly(p, tooltip = "text")
 }
+
 
 # Define some constant variables used in the text description of the data
 placeholder_constant_1 <- "1 gazillion"
@@ -86,13 +98,14 @@ ui <- fluidPage(
           p(strong("Table 1")),
           DTOutput("table1"),
           
-          tags$h3("Graph: Cohabitation by Ownership", id = "graph"),
-          p("The graph below shows cohabitation patterns for different homeownership statuses."),
+          tags$h3("Graph: Cohabitation by Ownership, 2012", id = "graph"),
+          p(paste("The graph below shows the fraction of the population living with their",
+            "parents, separated by the renter or homeowner status of the household.")),
           
           # Add a row with radio buttons and graph
           fluidRow(
             column(
-              width = 3,
+              width = 2,
               radioButtons(
                 "ownership_status", 
                 label = "Select Homeownership Status:",
@@ -107,16 +120,19 @@ ui <- fluidPage(
               )
             ),
             column(
-              width = 9,
-              plotlyOutput("ownership_graph", height = "600px")
+              width = 5,
+              plotlyOutput("ownership_graph_2012", height = "600px")
+            ),
+            column(
+              width = 5,
+              plotlyOutput("ownership_graph_2022", height = "600px")
             )
-          )
-
-          )
         )
+        )
+
       )
   )
-
+)
 
 # Define server
 server <- function(input, output, session) {
@@ -148,22 +164,31 @@ server <- function(input, output, session) {
   })
       
   # Render Graph: Cohabitation by Ownership
-  output$ownership_graph <- renderPlotly({
+  output$ownership_graph_2012 <- renderPlotly({
     selected_status <- input$ownership_status
     
     # Dynamically filter data based on selected ownership status
     filtered_data <- result$own_age_cohab_2012_se$data |>
-      dplyr::filter(OWNERSHPD == selected_status) |>
-      # TODO: turn this into factor at data processing stage
-      mutate(AGE_bucket = factor(
-        AGE_bucket,
-        levels = c("Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")
-      ))
+      dplyr::filter(OWNERSHPD == selected_status)
     
     # Generate the graph
-    stacked_bar(
+    stacked_bar_plotly(
       data = filtered_data,
-      title = paste("Cohabitation Patterns:", selected_status)
+      title = paste("2012 Cohabitation Patterns:", selected_status, "households")
+    )
+  })
+  
+  output$ownership_graph_2022 <- renderPlotly({
+    selected_status <- input$ownership_status
+    
+    # Dynamically filter data based on selected ownership status
+    filtered_data <- result$own_age_cohab_2022_se$data |>
+      dplyr::filter(OWNERSHPD == selected_status)
+    
+    # Generate the graph
+    stacked_bar_plotly(
+      data = filtered_data,
+      title = paste("2022 Cohabitation Patterns:", selected_status, "households")
     )
   })
 }
