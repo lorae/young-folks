@@ -11,7 +11,7 @@ library(plotly)
 load("data.rda")
 
 # Define a helper function for a stacked bar chart
-stacked_bar_plotly <- function(data, title = "Default title") {
+stacked_bar_hhstatus <- function(data, title = "Default title") {
   plot_ly(
     data |> 
       mutate(
@@ -33,6 +33,48 @@ stacked_bar_plotly <- function(data, title = "Default title") {
       "Both child and parent are dependent" = "#1e81b0",
       "Child depends on parent" = "#075792",
       "Living in institution" = "lightcoral"
+    ),
+    text = ~paste(
+      "Age Group:", AGE_bucket, "<br>",
+      "Cohabit Bin:", cohabit_bin, "<br>",
+      "Percent:", scales::percent(percent / 100, accuracy = 0.1), "<br>",
+      "Count:", count
+    ),
+    hoverinfo = "text",
+    marker = list(line = list(color = 'black', width = 1)),
+    showlegend = TRUE
+  ) |>
+    layout(
+      barmode = 'stack',
+      title = title,
+      xaxis = list(title = "Age Group"),
+      yaxis = list(title = "Percentage", tickformat = ".0%"),
+      legend = list(title = list(text = " "))
+    )
+}
+
+stacked_bar_cohabit <- function(data, title = "Default title") {
+  plot_ly(
+    data |> 
+      mutate(
+        # TODO: turn this into factor at data processing stage
+        AGE_bucket = factor(
+          AGE_bucket,
+          levels = c("Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")
+        ),
+        # TODO: consider refactoring at data processing stage
+        cohabit_bin = forcats::fct_rev(cohabit_bin)
+      ),
+    x = ~AGE_bucket,
+    y = ~percent/100,
+    type = 'bar',
+    color = ~OWNERSHPD,
+    colors = c(
+      "N/A" = "white",
+      "Owned free and clear" = "#46b1d5",
+      "Owned with mortgage or loan" = "yellow",
+      "With cash rent" = "green",
+      "No cash rent" = "lightcoral"
     ),
     text = ~paste(
       "Age Group:", AGE_bucket, "<br>",
@@ -102,7 +144,8 @@ ui <- fluidPage(
           p(paste("The graph below shows the fraction of the population living with their",
             "parents by age group. Individuals are filtered by the type of household",
             "they live in: owner-occupied, renter-occupied, or not otherwise specified.",
-            "Data can also be toggled by year: 2012 and 2022. "
+            "Unsurprisingly, a large fraction of young Americans who live in an owner-occupied",
+            "household live with their parents. "
             )),
           
           # Add a row with radio buttons and graph
@@ -132,7 +175,37 @@ ui <- fluidPage(
               width = 10,
               plotlyOutput("ownership_graph", height = "600px")
             )
+        ),
+        
+        # Add a row with radio buttons and graph
+        fluidRow(
+          column(
+            width = 2,
+            radioButtons(
+              "cohabit_status", 
+              label = "Cohabit status:",
+              choices = c(
+                "Not living with parents" = "Not living with parents",
+                "Child provides for parent" = "Child provides for parent",
+                "Both child and parent are dependent" = "Both child and parent are dependent",
+                "Child depends on parent" = "Child depends on parent",
+                "Living in institution" = "Living in institution"
+              ),
+              selected = "Not living with parents"
+            ),
+            radioButtons(
+              "year_selection", 
+              label = "Year:",
+              choices = c("2012", "2022"),
+              selected = "2012"
+            )
+          ),
+          column(
+            width = 10,
+            plotlyOutput("ownership_graph_cohabit", height = "600px")
+          )
         )
+        
         )
 
       )
@@ -183,9 +256,30 @@ server <- function(input, output, session) {
     filtered_data <- dplyr::filter(data, OWNERSHPD == selected_status)
     
     # Generate the graph
-    stacked_bar_plotly(
+    stacked_bar_hhstatus(
       data = filtered_data,
       title = paste(selected_year, "Cohabitation by Household Type: \n", selected_status)
+    )
+  })
+  
+  # Render Graph: Cohabitation by Ownership
+  output$ownership_graph_cohabit <- renderPlotly({
+    selected_status <- input$cohabit_status
+    selected_year <- input$year_selection
+    
+    # Filter data dynamically based on selected year
+    data <- if (selected_year == "2012") {
+      result$cohab_age_own_2012_se$data
+    } else {
+      result$cohab_age_own_2022_se$data
+    }
+    # Dynamically filter data based on selected ownership status
+    filtered_data <- dplyr::filter(data, cohabit_bin == selected_status)
+    
+    # Generate the graph
+    stacked_bar_cohabit(
+      data = filtered_data,
+      title = paste(selected_year, "Cohabitation by Cohabit Status: \n", selected_status)
     )
   })
 
