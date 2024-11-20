@@ -48,8 +48,8 @@ stacked_bar_plotly <- function(data, title = "Default title") {
       barmode = 'stack',
       title = title,
       xaxis = list(title = "Age Group"),
-      yaxis = list(title = "Percentage", tickformat = ".0%")#,
-      #legend = list(title = list(text = "Cohabit Bin"))
+      yaxis = list(title = "Percentage", tickformat = ".0%"),
+      legend = list(title = list(text = "Cohabit Bin"))
     )
 }
 
@@ -100,7 +100,10 @@ ui <- fluidPage(
           
           tags$h3("Cohabitation by Ownership", id = "graph"),
           p(paste("The graph below shows the fraction of the population living with their",
-            "parents, separated by the renter or homeowner status of the household.")),
+            "parents by age group. Individuals are filtered by the type of household",
+            "they live in: owner-occupied, renter-occupied, or not otherwise specified.",
+            "Data can also be toggled by year: 2012 and 2022. "
+            )),
           
           # Add a row with radio buttons and graph
           fluidRow(
