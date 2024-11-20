@@ -42,14 +42,14 @@ stacked_bar_plotly <- function(data, title = "Default title") {
     ),
     hoverinfo = "text",
     marker = list(line = list(color = 'black', width = 1)),
-    showlegend = FALSE
+    showlegend = TRUE
   ) |>
     layout(
       barmode = 'stack',
       title = title,
       xaxis = list(title = "Age Group"),
       yaxis = list(title = "Percentage", tickformat = ".0%"),
-      legend = list(title = list(text = "Cohabit Bin"))
+      legend = list(title = list(text = " "))
     )
 }
 
