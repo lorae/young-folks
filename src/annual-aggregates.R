@@ -167,6 +167,71 @@ result$own_age_cohab_2022_se <- list(
 
 save(result, file = "shiny-app/data.rda")
 
+# ----- Step 6: Same thing, different order: Tabulate cohabitation by age and homeowner/renter status ----- #
+cohab_age_own_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "cohabit_bin"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, cohabit_bin) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+cohab_age_own_2012_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2012),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "cohabit_bin"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, cohabit_bin) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+# Save these summary tables into result
+result$cohab_age_own_2012_se <- list(
+  desc = "A table describing the fraction of Americans in 2012 in a given age and cohabitation group that live with their parents. Values within a given age and cohabitation status add up to 100.",
+  data = cohab_age_own_2012_se
+)
+
+result$cohab_age_own_2022_se <- list(
+  desc = "A table describing the fraction of Americans in 2022 in a given age and cohabitation group that live with their parents. Values within a given age and cohabitation status add up to 100.",
+  data = cohab_age_own_2022_se
+)
+
+save(result, file = "shiny-app/data.rda")
 
 ###############################
 # Old code that isn't guaranteed to work anymore 
