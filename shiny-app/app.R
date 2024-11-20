@@ -5,37 +5,41 @@ library(DT)
 library(dplyr)
 library(scales)
 library(ggplot2)
+library(plotly)
 
 # Load necessary data
 load("data.rda")
 
-# Define a hel
-stacked_bar <- function(
-    data,
-    title = "Default title"
-) {
-  ggplot(data, aes(x = AGE_bucket, y = percent, fill = cohabit_bin)) +
+# Define a helper function for a stacked bar chart
+stacked_bar_plotly <- function(data, title = "Default title") {
+  p <- ggplot(data, aes(x = AGE_bucket, y = percent, fill = cohabit_bin, text = paste(
+    "Age Group:", AGE_bucket, "<br>",
+    "Cohabit Bin:", cohabit_bin, "<br>",
+    "Percent:", percent, "%<br>",
+    "Count:", count
+  ))) +
     geom_bar(stat = "identity", position = "fill") +
     scale_y_continuous(labels = scales::percent_format()) +
     labs(
-      title = title, 
-      x = "Age Group", 
-      y = "Percentage", 
+      title = title,
+      x = "Age Group",
+      y = "Percentage",
       fill = "Cohabit Bin"
     ) +
     scale_fill_manual(values = c(
-      "Not living with parents" = "white", 
-      "Child provides for parent" = "#075792", 
-      "Both child and parent are dependent" = "#1e81b0", 
-      "Child depends on parent" = "#46b1d5", 
+      "Not living with parents" = "white",
+      "Child provides for parent" = "#075792",
+      "Both child and parent are dependent" = "#1e81b0",
+      "Child depends on parent" = "#46b1d5",
       "Living in institution" = "lightcoral"
     )) +
-    geom_text(aes(
-      label = scales::percent(percent / 100, accuracy = 0.1)), 
-      position = position_fill(vjust = 0.5), size = 3) +
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-          legend.position = "bottom")
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "bottom"
+    )
+  
+  ggplotly(p, tooltip = "text")
 }
 
 # Define some constant variables used in the text description of the data
@@ -104,7 +108,7 @@ ui <- fluidPage(
             ),
             column(
               width = 9,
-              plotOutput("ownership_graph")
+              plotlyOutput("ownership_graph", height = "600px")
             )
           )
 
@@ -144,7 +148,7 @@ server <- function(input, output, session) {
   })
       
   # Render Graph: Cohabitation by Ownership
-  output$ownership_graph <- renderPlot({
+  output$ownership_graph <- renderPlotly({
     selected_status <- input$ownership_status
     
     # Dynamically filter data based on selected ownership status
