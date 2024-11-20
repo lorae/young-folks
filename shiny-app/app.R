@@ -9,6 +9,35 @@ library(ggplot2)
 # Load necessary data
 load("data.rda")
 
+# Define a hel
+stacked_bar <- function(
+    data,
+    title = "Default title"
+) {
+  ggplot(data, aes(x = AGE_bucket, y = percent, fill = cohabit_bin)) +
+    geom_bar(stat = "identity", position = "fill") +
+    scale_y_continuous(labels = scales::percent_format()) +
+    labs(
+      title = title, 
+      x = "Age Group", 
+      y = "Percentage", 
+      fill = "Cohabit Bin"
+    ) +
+    scale_fill_manual(values = c(
+      "Not living with parents" = "white", 
+      "Child provides for parent" = "#075792", 
+      "Both child and parent are dependent" = "#1e81b0", 
+      "Child depends on parent" = "#46b1d5", 
+      "Living in institution" = "lightcoral"
+    )) +
+    geom_text(aes(
+      label = scales::percent(percent / 100, accuracy = 0.1)), 
+      position = position_fill(vjust = 0.5), size = 3) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+          legend.position = "bottom")
+}
+
 # Define some constant variables used in the text description of the data
 placeholder_constant_1 <- "1 gazillion"
 placeholder_constant_2 <- 123456
@@ -52,11 +81,38 @@ ui <- fluidPage(
           
           p(strong("Table 1")),
           DTOutput("table1"),
+          
+          tags$h3("Graph: Cohabitation by Ownership", id = "graph"),
+          p("The graph below shows cohabitation patterns for different homeownership statuses."),
+          
+          # Add a row with radio buttons and graph
+          fluidRow(
+            column(
+              width = 3,
+              radioButtons(
+                "ownership_status", 
+                label = "Select Homeownership Status:",
+                choices = c(
+                  "Owned free and clear" = "Owned free and clear",
+                  "Owned with mortgage or loan" = "Owned with mortgage or loan",
+                  "With cash rent" = "With cash rent",
+                  "No cash rent" = "No cash rent",
+                  "N/A" = "N/A"
+                ),
+                selected = "Owned free and clear"
+              )
+            ),
+            column(
+              width = 9,
+              plotOutput("ownership_graph")
+            )
+          )
 
           )
         )
       )
   )
+
 
 # Define server
 server <- function(input, output, session) {
@@ -85,6 +141,26 @@ server <- function(input, output, session) {
         rownames = FALSE
       ) |>
       formatPercentage(c("percent"), digits = 0)
+  })
+      
+  # Render Graph: Cohabitation by Ownership
+  output$ownership_graph <- renderPlot({
+    selected_status <- input$ownership_status
+    
+    # Dynamically filter data based on selected ownership status
+    filtered_data <- result$own_age_cohab_2012_se$data |>
+      dplyr::filter(OWNERSHPD == selected_status) |>
+      # TODO: turn this into factor at data processing stage
+      mutate(AGE_bucket = factor(
+        AGE_bucket,
+        levels = c("Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")
+      ))
+    
+    # Generate the graph
+    stacked_bar(
+      data = filtered_data,
+      title = paste("Cohabitation Patterns:", selected_status)
+    )
   })
 }
 
