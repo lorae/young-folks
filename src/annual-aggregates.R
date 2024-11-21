@@ -269,11 +269,19 @@ sex_race_summarize <- function(
       filter(RACE_ETH_bucket == race_eth_bucket)
   }
   
-  # Define encoding for SEX factor labels
+  # Define encoding for factor labels
   sex_labels <- c(
     "1" = "Male",
     "2" = "Female",
     "3" = "All"
+  )
+  
+  cohabit_labels <- c(
+    "0" = "Not living with parents", 
+    "1" = "Child provides for parent", 
+    "2" = "Both child and parent are dependent", 
+    "3" = "Child depends on parent", 
+    "9" = "Living in institution"
   )
   
   # Write a description to include in output
@@ -320,15 +328,19 @@ sex_race_summarize <- function(
   # `cohabit_bysex` for males (SEX = 1) and females (SEX = 2) to produce the 
   # data for output
   output$data <- bind_rows(cohabit_bysex, cohabit) |>
-    mutate( # Convert integers to factors using `sex_labels`
+    mutate( # Encode factor strings using `sex_labels` and `cohabit_labels`
       SEX = factor(
         as.character(SEX),
         levels = names(sex_labels),
         labels = sex_labels
+      ),
+      cohabit_bin = factor(
+        as.character(cohabit_bin),
+        levels = names(cohabit_labels),
+        labels = cohabit_labels
       )
     ) |>
     arrange(AGE_bucket, SEX)
-  
   
   return(output)
 }
