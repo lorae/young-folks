@@ -13,19 +13,34 @@ load("race-sex-summary.rda")
 
 # Define a helper function for a stacked bar chart
 stacked_bar_hhstatus <- function(data, title = "Default title") {
-  plot_ly(
-    data |> 
-      mutate(
-        # TODO: turn this into factor at data processing stage
-        AGE_bucket = factor(
-          AGE_bucket,
-          levels = c("Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")
-        ),
-        # TODO: consider refactoring at data processing stage
-        cohabit_bin = forcats::fct_rev(cohabit_bin)
+  # First, transform data as needed for the plot
+  data_for_plot <- data |> 
+    mutate(
+      # TODO: turn this into factor at data processing stage
+      AGE_bucket = factor(
+        AGE_bucket,
+        levels = c("Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")
       ),
+      # TODO: consider refactoring at data processing stage
+      cohabit_bin = forcats::fct_rev(cohabit_bin)
+    ) |> 
+    # Calculate the total percentage for each age group (for annotation positioning)
+    group_by(AGE_bucket) |> 
+    mutate(
+      total_parent_dependent = sum(
+        percent[cohabit_bin %in% c("Child provides for parent", 
+                                   "Both child and parent are dependent", 
+                                   "Child depends on parent")]
+      ),
+      total_all_categories = sum(percent) # Total height of all bars for each age group
+    ) |> 
+    ungroup()
+  
+  # Create the plot
+  plot <- plot_ly(
+    data_for_plot,
     x = ~AGE_bucket,
-    y = ~percent/100,
+    y = ~percent / 100,
     type = 'bar',
     color = ~cohabit_bin,
     colors = c(
@@ -50,9 +65,38 @@ stacked_bar_hhstatus <- function(data, title = "Default title") {
       title = title,
       xaxis = list(title = "Age Group"),
       yaxis = list(title = "Percentage", tickformat = ".0%"),
-      legend = list(title = list(text = " "))
+      legend = list(title = list(text = " ")),
+      # Add a note at the bottom
+      annotations = list(
+        list(
+          x = 0.5,  # Center the text horizontally
+          y = -0.1, # Place it below the x-axis
+          text = "Values displayed are percentage living with a parent (sum of blue categories).",
+          showarrow = FALSE,
+          xref = "paper",
+          yref = "paper",
+          xanchor = "center",
+          yanchor = "top",
+          font = list(size = 10, color = "black")
+        )
+      )
     )
+  
+  # Add annotations for the sum of percentages
+  plot <- plot |> add_annotations(
+    data = data_for_plot |> distinct(AGE_bucket, total_parent_dependent, total_all_categories),
+    x = ~AGE_bucket,
+    y = ~total_all_categories / 100, # Place above the total height of the bar
+    text = ~scales::percent(total_parent_dependent / 100, accuracy = 0.1),
+    xanchor = 'center',
+    yanchor = 'bottom',
+    showarrow = FALSE,
+    font = list(size = 10, color = "black")
+  )
+  
+  return(plot)
 }
+
 
 stacked_bar_cohabit <- function(data, title = "Default title") {
   plot_ly(
@@ -174,6 +218,10 @@ ui <- fluidPage(
                   "of the child?
                   ")),
           
+          p(paste(
+            "TODO: add 95% confidence interval for percents to hover element on graphs"
+          )),
+          
           tags$h3("Table 1: Homeownership in the United States", id = "table1"),
           
           p(paste("Table 1a shows the fraction of individuals in the United States",
@@ -194,7 +242,7 @@ ui <- fluidPage(
           # Add a row with radio buttons and graph
           fluidRow(
             column(
-              width = 2,
+              width = 6,
               radioButtons(
                 "ownership_status_a", 
                 label = "Homeownership status:",
@@ -206,19 +254,17 @@ ui <- fluidPage(
                   "N/A" = "N/A"
                 ),
                 selected = "Owned free and clear"
-              ),
+              )),
+            column(
+              width = 6,
               radioButtons(
                 "year_selection_a", 
                 label = "Year:",
                 choices = c("2012", "2022"),
-                selected = "2012"
-              )
-            ),
-            column(
-              width = 10,
-              plotlyOutput("ownership_graph", height = "600px")
-            )
-        ),
+                selected = "2022"
+          ))),
+          
+        plotlyOutput("ownership_graph", height = "600px"),
         
         p(paste("It may be more informative to look at the question a different way:",
                 "given a young person's cohabitation status,",
@@ -259,17 +305,65 @@ ui <- fluidPage(
               "year_selection_b", 
               label = "Year:",
               choices = c("2012", "2022"),
-              selected = "2012"
+              selected = "2022"
             )
           ),
           column(
             width = 10,
             plotlyOutput("ownership_graph_cohabit", height = "600px")
           )
-        )
+        ),
         
-        )
+        tags$h3("Cohabitation by Race and Sex", id = "graph"),
+        
+        p(paste(
+          "Cohabitation varies greatly by both race and sex. Men tend to live with",
+          "their parents more than women do, and xxxx."
+        )),
+        
+        fluidRow(
+          column(
+            width = 4,
+            radioButtons(
+              "race_selection_c",
+              label = "Race / Ethnicity",
+              choices = c(
+                "Asian American / Pacific Islander" = "AAPI",
+                "American Indian / Alaska Native" = "AIAN",
+                "Black" = "Black",
+                "Hispanic" = "Hispanic",
+                "Multiracial" = "Multiracial",
+                "White" = "White",
+                "Other" = "Other",
+                "All" = "All"
+              ),
+              selected = "All"
+            )),
+          column(
+            width = 4,
+            radioButtons(
+              "sex_selection_c", 
+              label = "Gender:",
+              choices = c(
+                "Male" = "Male",
+                "Female" = "Female",
+                "All" = "All"
+              ),
+              selected = "All"
+          )),
+          column(
+            width = 4,
+            radioButtons(
+              "year_selection_c", 
+              label = "Year:",
+              choices = c("2012", "2022"),
+              selected = "2022"
+          ))
+        ),
 
+        plotlyOutput("race_sex_cohabit", height = "600px")
+
+        )
       )
   )
 )
@@ -348,6 +442,35 @@ server <- function(input, output, session) {
     stacked_bar_cohabit(
       data = filtered_data,
       title = paste(selected_year, "Renter/Homeownership Status by Age: \n", selected_status)
+    )
+  })
+  
+  # Cohabitation by Race and SEx
+  output$race_sex_cohabit <- renderPlotly({
+    selected_sex <- input$sex_selection_c
+    selected_year <- input$year_selection_c
+    selected_race <- input$race_selection_c
+    
+    # Dynamically filter data based on radio button selection
+    filtered_data <- race_sex_summary |>
+      dplyr::filter(SEX == selected_sex & YEAR == selected_year & RACE_ETH_bucket == selected_race)
+    
+    # Dynamic graph title based on radio button user inputs
+    if (selected_sex == "Male") {
+      title_custom = paste(selected_race, "Men")
+    } else if (selected_sex == "Female") {
+      title_custom = paste(selected_race, "Women")
+    } else {
+      if (selected_race == "All") {
+        title_custom = "All Genders, All Races"
+      } else {
+        title_custom = paste("All Genders,", selected_race)
+      }
+    }
+    # Generate the graph
+    stacked_bar_hhstatus(
+      data = filtered_data,
+      title = paste(selected_year, "Cohabitation Status by Age: \n", title_custom)
     )
   })
 
