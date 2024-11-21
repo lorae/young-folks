@@ -237,8 +237,6 @@ result$cohab_age_own_2022_se <- list(
   data = cohab_age_own_2022_se
 )
 
-save(result, file = "shiny-app/data.rda")
-
 # ----- Step 7: Cohabitation by race and sex ----- #
 # For this step, we'll do an overall population breakdown (all races, male and female and total)
 # as well as each race total and each race male and female.
@@ -290,7 +288,7 @@ sex_race_summarize <- function(
   
   # Write a description to include in output
   year_desc <- ifelse(is.null(year), "all years", year)
-  race_desc <- ifelse(is.null(race_eth_bucket), "young adults of ages", paste("young", race_eth_bucket, "adults"))
+  race_desc <- ifelse(is.null(race_eth_bucket), "young adults", paste("young", race_eth_bucket, "adults"))
   output$desc = paste0("A table summarizing cohabitation by age among ",
                        race_desc,
                        " in ",
@@ -353,8 +351,29 @@ sex_race_summarize <- function(
   return(output)
 }
 
+# Compute these summary tables and save into result
+# TODO: find a more elegant solution using a purrr::map or similar
+result$age_sex_all_2022 <- sex_race_summarize(year = 2022)
+result$age_sex_all_2012 <- sex_race_summarize(year = 2012)
 
+result$age_sex_aapi_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "AAPI")
+result$age_sex_aian_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "AIAN")
+result$age_sex_black_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Black")
+result$age_sex_hispan_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Hispanic")
+result$age_sex_multi_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Multiracial")
+result$age_sex_other_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Other")
+result$age_sex_white_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "White")
 
+result$age_sex_aapi_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "AAPI")
+result$age_sex_aian_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "AIAN")
+result$age_sex_black_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Black")
+result$age_sex_hispan_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Hispanic")
+result$age_sex_multi_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Multiracial")
+result$age_sex_other_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Other")
+result$age_sex_white_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "White")
+
+# ----- Step 8: Save all results ----- #
+save(result, file = "shiny-app/data.rda")
 
 ###############################
 # Old code that isn't guaranteed to work anymore 
