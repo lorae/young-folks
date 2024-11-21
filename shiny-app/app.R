@@ -125,12 +125,54 @@ ui <- fluidPage(
             "percent of young adults aged XX - YY lived with their parents. By 2022,",
             "this figure grew/shrank to",
             placeholder_constant_2, 
-            "percent."
+            "percent.",
+            "Young adults who live with their parents comprise a large and growing",
+            "fraction of the U.S. population. But who are the people who choose to",
+            "live with their parents, and what factors make a person more likely to",
+            "co-habit?"
           ),
+
+          p(paste(
+            "On one hand, living with one's parents could be a sign of greater financial",
+            "autonomy. Parental cohabitation could be a habit among more privileged young",
+            "adults who save money on rent by living on home. Increased cohabitation could",
+            "also reflect the growing fraction of Americans in their teens and twenties",
+            "who are attending college.",
+            "On the other hand, living with parents could be a sign of growing financial",
+            "distress among young adults. As housing costs rise more rapidly than wages,",
+            "young adults may be priced out of rental markets.",
+            "Another explanation for the growth in parental cohabitation is cultural:",
+            "There may simply be declining stigma around the practice."
+            )),
+          
+          p(paste(
+            "The effects of parental cohabitation on America's youth are also unclear.",
+            "Cohabitation could help young adults accumulate savings. If the practice",
+            "is more concentrated among children of wealthier parents, then it may",
+            "widen existing wealth gaps over time.",
+            "On the other hand, if parental cohabitation inhibits geographic mobility,",
+            "it might make young adults financially worse off in the long-run.",
+            "For a young adult considering a job opportunity",
+            "in a different city, the opportunity costs of moving include the cost of renting",
+            "instead of living rent-free (or nearly rent-free) in a city where one's",
+            "parents already own a home. This may impede wealth growth, particularly",
+            "among young people whose parents own homes in parts of the country that",
+            "have seen a secular decline in job opportunities, such as within the rust belt."
+          )),
+          
+          p(paste(
+            "Surveys have shown a growing prevalence of parental cohabitation among young",
+            "adults [Cite Pew or other surveys here], but little is known about the",
+            "sociodemographic profile of these individuals or the factors driving this",
+            "trend. In this document, we investigate a few key associative questions:"
+          )),
+          
           p(paste("To what extent do these patterns differ by race? By gender? Are",
                   "children relying on parents, or are parents relying on children?",
-                  "How does this vary by the homeownership or renter status of the",
-                  "household?")),
+                  "How does cohabitation vary by the homeownership or renter status of the",
+                  "household? How does it vary based on the education and income level",
+                  "of the child?
+                  ")),
           
           tags$h3("Table 1: Homeownership in the United States", id = "table1"),
           
@@ -179,7 +221,7 @@ ui <- fluidPage(
         ),
         
         p(paste("It may be more informative to look at the question a different way:",
-                "given a young person's living status (with or without their parent)",
+                "given a young person's cohabitation status,",
                 "what type of home -- owner-occupied or renter-occupied -- do they",
                 "typically inhabit? The results below show that a majority of young",
                 "adults in their twenties who do not live with their parents occupy rented",
