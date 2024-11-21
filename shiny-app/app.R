@@ -9,6 +9,7 @@ library(plotly)
 
 # Load necessary data
 load("data.rda")
+load("race-sex-summary.rda")
 
 # Define a helper function for a stacked bar chart
 stacked_bar_hhstatus <- function(data, title = "Default title") {
@@ -153,7 +154,7 @@ ui <- fluidPage(
             column(
               width = 2,
               radioButtons(
-                "ownership_status", 
+                "ownership_status_a", 
                 label = "Homeownership status:",
                 choices = c(
                   "Owned free and clear" = "Owned free and clear",
@@ -165,7 +166,7 @@ ui <- fluidPage(
                 selected = "Owned free and clear"
               ),
               radioButtons(
-                "year_selection", 
+                "year_selection_a", 
                 label = "Year:",
                 choices = c("2012", "2022"),
                 selected = "2012"
@@ -182,7 +183,7 @@ ui <- fluidPage(
           column(
             width = 2,
             radioButtons(
-              "cohabit_status", 
+              "cohabit_status_b", 
               label = "Cohabit status:",
               choices = c(
                 "Not living with parents" = "Not living with parents",
@@ -194,7 +195,7 @@ ui <- fluidPage(
               selected = "Not living with parents"
             ),
             radioButtons(
-              "year_selection", 
+              "year_selection_b", 
               label = "Year:",
               choices = c("2012", "2022"),
               selected = "2012"
@@ -243,8 +244,8 @@ server <- function(input, output, session) {
       
   # Render Graph: Cohabitation by Ownership
   output$ownership_graph <- renderPlotly({
-    selected_status <- input$ownership_status
-    selected_year <- input$year_selection
+    selected_status <- input$ownership_status_a
+    selected_year <- input$year_selection_a
     
     # Filter data dynamically based on selected year
     data <- if (selected_year == "2012") {
@@ -264,8 +265,8 @@ server <- function(input, output, session) {
   
   # Render Graph: Cohabitation by Ownership
   output$ownership_graph_cohabit <- renderPlotly({
-    selected_status <- input$cohabit_status
-    selected_year <- input$year_selection
+    selected_status <- input$cohabit_status_b
+    selected_year <- input$year_selection_b
     
     # Filter data dynamically based on selected year
     data <- if (selected_year == "2012") {
