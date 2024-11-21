@@ -372,8 +372,31 @@ result$age_sex_multi_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "
 result$age_sex_other_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Other")
 result$age_sex_white_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "White")
 
+race_sex_summary <- bind_rows(
+  # 2012 Results
+  result$age_sex_aapi_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "AAPI"),
+  result$age_sex_aian_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "AIAN"),
+  result$age_sex_black_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Black"),
+  result$age_sex_hispan_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Hispanic"),
+  result$age_sex_multi_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Multiracial"),
+  result$age_sex_other_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Other"),
+  result$age_sex_white_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "White"),
+  # 2022 Results
+  result$age_sex_aapi_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "AAPI"),
+  result$age_sex_aian_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "AIAN"),
+  result$age_sex_black_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Black"),
+  result$age_sex_hispan_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Hispanic"),
+  result$age_sex_multi_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Multiracial"),
+  result$age_sex_other_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Other"),
+  result$age_sex_white_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "White"),
+  # All Results
+  result$age_sex_all_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "All"),
+  result$age_sex_all_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "All")
+)
+
 # ----- Step 8: Save all results ----- #
 save(result, file = "shiny-app/data.rda")
+save(race_sex_summary, file = "shiny-app/race-sex-summary.rda")
 
 ###############################
 # Old code that isn't guaranteed to work anymore 
