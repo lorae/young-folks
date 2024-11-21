@@ -178,6 +178,25 @@ ui <- fluidPage(
             )
         ),
         
+        p(paste("It may be more informative to look at the question a different way:",
+                "given a young person's living status (with or without their parent)",
+                "what type of home -- owner-occupied or renter-occupied -- do they",
+                "typically inhabit? The results below show that a majority of young",
+                "adults in their twenties who do not live with their parents occupy rented",
+                "housholds. And a large majority of these same Americans in their",
+                "twenties who live with and financially depend on a parent live in owner-",
+                "occupied households. There is some ambiguity in defining cohabiting",
+                "households where the child relies on the parent versus where the parent",
+                "relies on the child. [TODO: add hyperlink to the document defining",
+                "how we classify these individuals]. Nevertheless, we can feel somewhat optimistic",
+                "that our measure of parental reliance is accurate: the profiles",
+                "of young adults who support their parents and of young adults who",
+                "don't live with their parents both show similar age patterns skewed",
+                "toward rentership. This relationship is consistent with a hypothesis that both these groups are",
+                "more financially burdened than their peers who rely on their parents for",
+                "shelter, and are therefore unlikely to have already purchased a home."
+        )),
+
         # Add a row with radio buttons and graph
         fluidRow(
           column(
