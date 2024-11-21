@@ -281,19 +281,25 @@ server <- function(input, output, session) {
   output$table1 <- renderDT({
     
     own_2012_se <- result$own_2012_se$data |>
-      mutate(year = 2012)
+      mutate(
+        year = 2012,
+        percent = percent/100
+      )
     
     own_2022_se <- result$own_2022_se$data |>
-      mutate(year = 2022)
+      mutate(
+        year = 2022,
+        percent = percent/100
+      )
     
     example_table <- bind_rows(
       own_2012_se, 
-      own_2022_se) 
+      own_2022_se
+      ) 
       
       datatable(
         example_table,
         options = list(
-          pageLength = 5,
           autoWidth = TRUE,
           dom = 't',
           ordering = FALSE
@@ -320,7 +326,7 @@ server <- function(input, output, session) {
     # Generate the graph
     stacked_bar_hhstatus(
       data = filtered_data,
-      title = paste(selected_year, "Cohabitation by Household Type: \n", selected_status)
+      title = paste(selected_year, "Cohabitation by Age: \n", selected_status, "households")
     )
   })
   
@@ -341,7 +347,7 @@ server <- function(input, output, session) {
     # Generate the graph
     stacked_bar_cohabit(
       data = filtered_data,
-      title = paste(selected_year, "Cohabitation by Cohabit Status: \n", selected_status)
+      title = paste(selected_year, "Renter/Homeownership Status by Age: \n", selected_status)
     )
   })
 
