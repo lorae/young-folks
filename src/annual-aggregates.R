@@ -3,7 +3,8 @@
 # Track rates of young adults living with parents from 2012 to 2022.
 # Input: data/db/ipums-processed.duckdb
 # Output: 
-# - list here
+# - data.rda in shiny-app folder, used to populated app.R with data
+#   for visualizations
 # - ...
 
 # ----- Step 0: Load packages ----- #
@@ -13,16 +14,406 @@ library("ipumsr")
 library("readr")
 library("tidyr")
 library("ggplot2")
+library("purrr")
 
 # ----- Step 1: Source helper functions ----- #
 
 devtools::load_all("../dataduck")
 
-# ----- Step 2: Import and wrangle data ----- #
+# ----- Step 2: Import data ----- #
 
 con <- dbConnect(duckdb::duckdb(), "data/db/ipums.duckdb")
 
 ipums_relate <- tbl(con, "ipums_relationships") 
+
+# ----- Step 3: Initialize labels ----- #
+ownership_labels <- c(
+  "0"  = "N/A",
+  "12" = "Owned free and clear",
+  "13" = "Owned with mortgage or loan",
+  "21" = "No cash rent",
+  "22" = "With cash rent"
+)
+
+cohabit_labels <- c(
+  "0" = "Not living with parents", 
+  "1" = "Child provides for parent", 
+  "2" = "Both child and parent are dependent", 
+  "3" = "Child depends on parent", 
+  "9" = "Living in institution"
+)
+
+sex_labels <- c(
+  "1" = "Male",
+  "2" = "Female",
+  "3" = "All"
+)
+
+# ----- Step 4: See what fraction of America falls under each ownership structure ----- #
+own_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("OWNERSHPD"),
+  group_by = c("OWNERSHPD"),
+  percent_group_by = c(),
+  every_combo = TRUE
+) |>
+  arrange(OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),            # Convert to character
+      levels = names(ownership_labels),   # Use character levels
+      labels = ownership_labels           # Assign corresponding labels
+    )
+  )
+
+own_2012_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2012),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("OWNERSHPD"),
+  group_by = c("OWNERSHPD"),
+  percent_group_by = c(),
+  every_combo = TRUE
+) |>
+  arrange(OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),            # Convert to character
+      levels = names(ownership_labels),   # Use character levels
+      labels = ownership_labels           # Assign corresponding labels
+    )
+  )
+
+print(own_2012_se)
+print(own_2022_se)
+
+# Save these summary tables into result
+result <- list(
+  own_2012_se = list(
+    desc = "A table describing the fraction of Americans in 2012 by homeowner and renter status.",
+    data = own_2012_se
+  ),
+  own_2022_se = list(
+    desc = "A table describing the fraction of Americans in 2022 by homeowner and renter status.",
+    data = own_2022_se
+  )
+)
+
+# ----- Step 5: Tabulate cohabitation by age and homeowner/renter status ----- #
+own_age_cohab_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "OWNERSHPD"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+own_age_cohab_2012_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2012),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "OWNERSHPD"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, OWNERSHPD) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+# Save these summary tables into result
+result$own_age_cohab_2012_se <- list(
+  desc = "A table describing the fraction of Americans in 2012 by age, cohabitation status, and homeowner/renter status. Values within a given age and homeowner/renter status add up to 100.",
+  data = own_age_cohab_2012_se
+)
+
+result$own_age_cohab_2022_se <- list(
+  desc = "A table describing the fraction of Americans in 2022 by age, cohabitation status, and homeowner/renter status. Values within a given age and homeowner/renter status add up to 100.",
+  data = own_age_cohab_2022_se
+)
+
+save(result, file = "shiny-app/data.rda")
+
+# ----- Step 6: Same thing, different order: Tabulate cohabitation by age and homeowner/renter status ----- #
+cohab_age_own_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "cohabit_bin"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, cohabit_bin) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+cohab_age_own_2012_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2012),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  group_by = c("AGE_bucket", "cohabit_bin", "OWNERSHPD"),
+  percent_group_by = c("AGE_bucket", "cohabit_bin"),
+  every_combo = TRUE
+) |>
+  arrange(AGE_bucket, cohabit_bin) |>
+  mutate(
+    OWNERSHPD = factor(
+      as.character(OWNERSHPD),
+      levels = names(ownership_labels),
+      labels = ownership_labels
+    ),
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    )
+  )
+
+# Save these summary tables into result
+result$cohab_age_own_2012_se <- list(
+  desc = "A table describing the fraction of Americans in 2012 in a given age and cohabitation group that live with their parents. Values within a given age and cohabitation status add up to 100.",
+  data = cohab_age_own_2012_se
+)
+
+result$cohab_age_own_2022_se <- list(
+  desc = "A table describing the fraction of Americans in 2022 in a given age and cohabitation group that live with their parents. Values within a given age and cohabitation status add up to 100.",
+  data = cohab_age_own_2022_se
+)
+
+# ----- Step 7: Cohabitation by race and sex ----- #
+# For this step, we'll do an overall population breakdown (all races, male and female and total)
+# as well as each race total and each race male and female.
+
+# Function for generating these breakdowns using filter criteria as an input
+sex_race_summarize <- function(
+    year = NULL,
+    race_eth_bucket = NULL,
+    data = ipums_relate
+) {
+  # Initialize output as an empty list
+  output <- list()
+  
+  # TODO: add checks to ensure that both year and race_eth_bucket actual arguments
+  # exist in the data. Error if not.
+  
+  # Apply user-defined filters to the input data. Allows for NULL filter in 
+  # race or year category, which will result in the full sample being used.
+  data_filtered <- data
+  
+  if (!is.null(year)) {
+    data_filtered <- data_filtered |>
+      filter(YEAR == year)
+  }
+  
+  if (!is.null(race_eth_bucket)) {
+    data_filtered <- data_filtered |>
+      filter(RACE_ETH_bucket == race_eth_bucket)
+  }
+  
+  # Define encoding for factor labels
+  sex_labels <- c(
+    "1" = "Male",
+    "2" = "Female",
+    "3" = "All"
+  )
+  
+  cohabit_labels <- c(
+    "0" = "Not living with parents", 
+    "1" = "Child provides for parent", 
+    "2" = "Both child and parent are dependent", 
+    "3" = "Child depends on parent", 
+    "9" = "Living in institution"
+  )
+  
+  age_levels <- c(
+    "Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+"
+  )
+  
+  # Write a description to include in output
+  year_desc <- ifelse(is.null(year), "all years", year)
+  race_desc <- ifelse(is.null(race_eth_bucket), "young adults", paste("young", race_eth_bucket, "adults"))
+  output$desc = paste0("A table summarizing cohabitation by age among ",
+                       race_desc,
+                       " in ",
+                       year_desc,
+                       ". Cohabitation status is broken down by sex: Male, Female, ",
+                       "and All (combined)."
+  )
+  
+  # Overall cohabitation breakdown, broken down by age and male/female sex
+  cohabit_bysex <- estimate_with_bootstrap_se(
+    data = data_filtered,
+    f = crosstab_percent,
+    wt_col = "PERWT",
+    repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+    constant = 4/80,
+    se_cols = c("percent"),
+    id_cols = c("AGE_bucket", "SEX", "cohabit_bin"),
+    group_by = c("AGE_bucket", "SEX", "cohabit_bin"),
+    percent_group_by = c("AGE_bucket", "SEX"),
+    every_combo = TRUE
+  ) 
+  
+  # Overall cohabitation breakdown, broken down by age
+  cohabit <- estimate_with_bootstrap_se(
+    data = data_filtered,
+    f = crosstab_percent,
+    wt_col = "PERWT",
+    repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+    constant = 4/80,
+    se_cols = c("percent"),
+    id_cols = c("AGE_bucket", "cohabit_bin"),
+    group_by = c("AGE_bucket", "cohabit_bin"),
+    percent_group_by = c("AGE_bucket"),
+    every_combo = TRUE
+  ) |>
+    mutate(SEX = 3) # Add column for sex and assign SEX = 3 for "All"
+  
+  # Combine the overall statistics from `cohabit` (SEX = 3) with those from 
+  # `cohabit_bysex` for males (SEX = 1) and females (SEX = 2) to produce the 
+  # data for output
+  output$data <- bind_rows(cohabit_bysex, cohabit) |>
+    mutate( # Encode factor strings using `sex_labels`, `cohabit_labels`, and `age_levels`
+      SEX = factor(
+        as.character(SEX),
+        levels = names(sex_labels),
+        labels = sex_labels
+      ),
+      cohabit_bin = factor(
+        as.character(cohabit_bin),
+        levels = names(cohabit_labels),
+        labels = cohabit_labels
+      ),
+      AGE_bucket = factor(
+        AGE_bucket,
+        levels = age_levels
+      )
+    ) |>
+    arrange(AGE_bucket, SEX)
+  
+  return(output)
+}
+
+# Compute these summary tables and save into result
+# TODO: find a more elegant solution using a purrr::map or similar
+result$age_sex_all_2022 <- sex_race_summarize(year = 2022)
+result$age_sex_all_2012 <- sex_race_summarize(year = 2012)
+
+result$age_sex_aapi_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "AAPI")
+result$age_sex_aian_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "AIAN")
+result$age_sex_black_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Black")
+result$age_sex_hispan_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Hispanic")
+result$age_sex_multi_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Multiracial")
+result$age_sex_other_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Other")
+result$age_sex_white_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "White")
+
+result$age_sex_aapi_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "AAPI")
+result$age_sex_aian_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "AIAN")
+result$age_sex_black_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Black")
+result$age_sex_hispan_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Hispanic")
+result$age_sex_multi_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Multiracial")
+result$age_sex_other_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Other")
+result$age_sex_white_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "White")
+
+# ----- Step 8: Save all results ----- #
+save(result, file = "shiny-app/data.rda")
+
+###############################
+# Old code that isn't guaranteed to work anymore 
+###############################
+
+# ----- Step 3: Compute percentage cohabitation in 2022 and 2012 ----- #
+cohabit_2022_se <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("AGE_bucket", "cohabit_bin"),
+  group_by = c("AGE_bucket", "cohabit_bin"),
+  percent_group_by = c("AGE_bucket"),
+  every_combo = TRUE
+) |>
+  mutate(
+    cohabit_bin = factor(
+      cohabit_bin, 
+      levels = c(0, 1, 2, 3, 9)
+    ),
+    AGE_bucket = factor(
+      AGE_bucket, 
+      levels = 
+        c("Under 16", 
+          "16-17", 
+          "17-18", 
+          "18-19", 
+          "20-21", 
+          "22-23", 
+          "24-25", 
+          "26-27", 
+          "28-29", 
+          "30+")
+    )) |>
+  arrange(AGE_bucket, cohabit_bin)
+
+
 
 cohabit_2022_with_percents <- crosstab_percent(
   data = ipums_relate |> filter(YEAR == 2022),
