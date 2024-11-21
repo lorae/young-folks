@@ -243,6 +243,97 @@ save(result, file = "shiny-app/data.rda")
 # For this step, we'll do an overall population breakdown (all races, male and female and total)
 # as well as each race total and each race male and female.
 
+# Function for generating these breakdowns using filter criteria as an input
+sex_race_summarize <- function(
+    year = NULL,
+    race_eth_bucket = NULL,
+    data = ipums_relate
+) {
+  # Initialize output as an empty list
+  output <- list()
+  
+  # TODO: add checks to ensure that both year and race_eth_bucket actual arguments
+  # exist in the data. Error if not.
+  
+  # Apply user-defined filters to the input data. Allows for NULL filter in 
+  # race or year category, which will result in the full sample being used.
+  data_filtered <- data
+  
+  if (!is.null(year)) {
+    data_filtered <- data_filtered |>
+      filter(YEAR == year)
+  }
+  
+  if (!is.null(race_eth_bucket)) {
+    data_filtered <- data_filtered |>
+      filter(RACE_ETH_bucket == race_eth_bucket)
+  }
+  
+  # Define encoding for SEX factor labels
+  sex_labels <- c(
+    "1" = "Male",
+    "2" = "Female",
+    "3" = "All"
+  )
+  
+  # Write a description to include in output
+  year_desc <- ifelse(is.null(year), "all years", year)
+  race_desc <- ifelse(is.null(race_eth_bucket), "young adults of ages", paste("young", race_eth_bucket, "adults"))
+  output$desc = paste0("A table summarizing cohabitation by age among ",
+                       race_desc,
+                       " in ",
+                       year_desc,
+                       ". Cohabitation status is broken down by sex: Male, Female, ",
+                       "and All (combined)."
+  )
+  
+  # Overall cohabitation breakdown, broken down by age and male/female sex
+  cohabit_bysex <- estimate_with_bootstrap_se(
+    data = data_filtered,
+    f = crosstab_percent,
+    wt_col = "PERWT",
+    repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+    constant = 4/80,
+    se_cols = c("percent"),
+    id_cols = c("AGE_bucket", "SEX", "cohabit_bin"),
+    group_by = c("AGE_bucket", "SEX", "cohabit_bin"),
+    percent_group_by = c("AGE_bucket", "SEX"),
+    every_combo = TRUE
+  ) 
+  
+  # Overall cohabitation breakdown, broken down by age
+  cohabit <- estimate_with_bootstrap_se(
+    data = data_filtered,
+    f = crosstab_percent,
+    wt_col = "PERWT",
+    repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+    constant = 4/80,
+    se_cols = c("percent"),
+    id_cols = c("AGE_bucket", "cohabit_bin"),
+    group_by = c("AGE_bucket", "cohabit_bin"),
+    percent_group_by = c("AGE_bucket"),
+    every_combo = TRUE
+  ) |>
+    mutate(SEX = 3) # Add column for sex and assign SEX = 3 for "All"
+  
+  # Combine the overall statistics from `cohabit` (SEX = 3) with those from 
+  # `cohabit_bysex` for males (SEX = 1) and females (SEX = 2) to produce the 
+  # data for output
+  output$data <- bind_rows(cohabit_bysex, cohabit) |>
+    mutate( # Convert integers to factors using `sex_labels`
+      SEX = factor(
+        as.character(SEX),
+        levels = names(sex_labels),
+        labels = sex_labels
+      )
+    ) |>
+    arrange(AGE_bucket, SEX)
+  
+  
+  return(output)
+}
+
+
 # Overall statistics, males and females, 2022
 sex_2022_se <- estimate_with_bootstrap_se(
   data = ipums_relate |> filter(YEAR == 2022),
