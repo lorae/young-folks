@@ -71,10 +71,10 @@ stacked_bar_cohabit <- function(data, title = "Default title") {
     color = ~OWNERSHPD,
     colors = c(
       "N/A" = "white",
-      "Owned free and clear" = "#46b1d5",
-      "Owned with mortgage or loan" = "yellow",
-      "With cash rent" = "green",
-      "No cash rent" = "lightcoral"
+      "Owned free and clear" = "#898fbd",
+      "Owned with mortgage or loan" = "#cdc9fb",
+      "With cash rent" = "#8ba888",
+      "No cash rent" = "#9ab163"
     ),
     text = ~paste(
       "Age Group:", AGE_bucket, "<br>",
