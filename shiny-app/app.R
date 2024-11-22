@@ -217,7 +217,7 @@ ui <- fluidPage(
             "document for this categorization.]",
             "The tables show that while the",
             "total percentage of young adults living with their parents has shrunk in the",
-            "past 10 years, the minority group of children supporting their parents has grown."
+            "past 10 years, the small group of young adults supporting their parents has grown."
           )),
           
           tags$h4("Table 1a: Cohabitation in 2012 among Americans ages 18-29", id = "table1a"),
@@ -226,55 +226,44 @@ ui <- fluidPage(
           DTOutput("table1b"),
 
           p(paste(
-            "It's unclear what social, economic, or demographic factors underlie",
-            "these aggregate trends. A reduction in parental cohabitation could",
-            "be indicative of improving financial lives among young adults, who are better",
-            "equipped to support themselves - and potentially others - earlier in their",
-            "lives. But it also could also indicate an increased burden in an environment",
-            "where housing costs are growing rapidly.",
-            "Reduced cohabitation could",
+            "The factors driving these aggregate trends remain unclear. A decline in parental",
+            "cohabitation might indicate improvements in the financial independence of young adults,",
+            "enabling them to support themselves—and potentially others—at an earlier age.",
+            "Alternatively, it could reflect increasing economic burdens in the face of rapidly",
+            "rising housing costs. Reduced cohabitation could",
             "also reflect the growing fraction of Americans in their teens and twenties",
-            "who are attending college [FACT CHECK]. It's also possible that cultural",
-            "norms around parental cohabitation have been changing, making young adults",
+            "who are attending college [FACT CHECK].",
+            "Cultural norms around living with parents might also be shifting, making young adults",
             "more averse to the practice [note from Lorae: As a young adult, I anecdotally don't think this",
             "is true. I think living with your parents is becoming less stigmatized over time].",
-            "It's also possible that the demographics of the population in the age 18-29",
-            "cohort have changed such that those groups with a lesser tendency to live",
-            "with their parents are growing in size. This is unlikely - as we show in",
-            "section XXX, Hispanic Americans - who are a rapidly growing segment of the",
-            "young U.S. population - tend to live with their parents more than people",
-            "belonging to other races/ethnicities. And White Americans, who comprise a",
-            "shrinking fraction of the U.S. population, tend to cohabit at the lowest rates."
-            )),
+            "Demographics may also play a role, but preliminary findings suggest this is not",
+            "a good explanation. Hispanic Americans, who tend to cohabit with parents",
+            "at higher rates, are a growing share of the population, while White (non-Hispanic)",
+            "Americans, who have the lowest parental cohabitation rates, are a shrinking share.",
+            "This demographic shift runs counter to the observed decline in cohabitation overall."
+          )),
           
           p(paste(
             "The effects of parental cohabitation on America's youth are also unclear.",
             "Cohabitation could help young adults accumulate savings. If the practice",
-            "is more concentrated among children of wealthier parents, then it may",
-            "widen existing wealth gaps over time.",
+            "is becoming less common, this may predict worse economic outcomes later in life.",
             "On the other hand, if parental cohabitation inhibits geographic mobility,",
-            "it might make young adults financially worse off in the long-run.",
-            "For a young adult considering a job opportunity",
-            "in a different city, the opportunity costs of moving include the cost of renting",
-            "instead of living rent-free (or nearly rent-free) in a city where one's",
-            "parents already own a home. This may impede wealth growth, particularly",
-            "among young people whose parents own homes in parts of the country that",
-            "have seen a secular decline in job opportunities, such as within the rust belt."
+            "the observed decline might mean that young adults are now more willing to",
+            "move in seek of job opportunities."
           )),
           
           p(paste(
             "Surveys have shown a growing prevalence of parental cohabitation among young",
             "adults [Cite Pew or other surveys here], but little is known about the",
-            "sociodemographic profile of these individuals or the factors driving this",
-            "trend. In this document, we investigate a few key preliminary questions:"
+            "socioeconomic profiles of these individuals, the factors driving the",
+            "reduction in cohabitation, and the potential longer-run outcomes.",
+            "In this document, we investigate some basic preliminary associations:"
           )),
           
-          p(paste("To what extent do these patterns differ by race? By gender? Are",
-                  "children relying on parents, or are parents relying on children?",
-                  "How does cohabitation vary by the homeownership or renter status of the",
-                  "household? How does it vary based on the education and income level",
-                  "of the child?
-                  ")),
+          p(paste(
+            "To what extent does cohabitation differ by gender, race, geography,",
+            "the homeownership / renter status of the parent, and the education and",
+            "income levels of the child?")),
           
           p(paste(
             "TODO: add 95% confidence interval for percents to hover element on graphs"
@@ -426,8 +415,7 @@ ui <- fluidPage(
         tags$h3("Cohabitation over time", id = "graph"),
         
         p(paste(
-          "The percentage of Americans supporting their parents has grown over the",
-          "past decade, particularly among xxx."
+          "TODO: all line graph here"
         ))
 
         )
