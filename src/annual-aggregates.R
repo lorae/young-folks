@@ -351,52 +351,84 @@ sex_race_summarize <- function(
   return(output)
 }
 
-# Compute these summary tables and save into result
+# Compute these summary tables and save into race_sex_summary
 # TODO: find a more elegant solution using a purrr::map or similar
-result$age_sex_all_2022 <- sex_race_summarize(year = 2022)
-result$age_sex_all_2012 <- sex_race_summarize(year = 2012)
-
-result$age_sex_aapi_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "AAPI")
-result$age_sex_aian_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "AIAN")
-result$age_sex_black_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Black")
-result$age_sex_hispan_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Hispanic")
-result$age_sex_multi_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Multiracial")
-result$age_sex_other_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "Other")
-result$age_sex_white_2022 <- sex_race_summarize(year = 2022, race_eth_bucket = "White")
-
-result$age_sex_aapi_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "AAPI")
-result$age_sex_aian_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "AIAN")
-result$age_sex_black_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Black")
-result$age_sex_hispan_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Hispanic")
-result$age_sex_multi_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Multiracial")
-result$age_sex_other_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "Other")
-result$age_sex_white_2012 <- sex_race_summarize(year = 2012, race_eth_bucket = "White")
-
 race_sex_summary <- bind_rows(
   # 2012 Results
-  result$age_sex_aapi_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "AAPI"),
-  result$age_sex_aian_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "AIAN"),
-  result$age_sex_black_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Black"),
-  result$age_sex_hispan_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Hispanic"),
-  result$age_sex_multi_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Multiracial"),
-  result$age_sex_other_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Other"),
-  result$age_sex_white_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "White"),
+  sex_race_summarize(year = 2012, race_eth_bucket = "AAPI")$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "AAPI"),
+  sex_race_summarize(year = 2012, race_eth_bucket = "AIAN")$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "AIAN"),
+  sex_race_summarize(year = 2012, race_eth_bucket = "Black")$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Black"),
+  sex_race_summarize(year = 2012, race_eth_bucket = "Hispanic")$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Hispanic"),
+  sex_race_summarize(year = 2012, race_eth_bucket = "Multiracial")$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Multiracial"),
+  sex_race_summarize(year = 2012, race_eth_bucket = "Other")$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "Other"),
+  sex_race_summarize(year = 2012, race_eth_bucket = "White")$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "White"),
   # 2022 Results
-  result$age_sex_aapi_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "AAPI"),
-  result$age_sex_aian_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "AIAN"),
-  result$age_sex_black_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Black"),
-  result$age_sex_hispan_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Hispanic"),
-  result$age_sex_multi_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Multiracial"),
-  result$age_sex_other_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Other"),
-  result$age_sex_white_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "White"),
+  sex_race_summarize(year = 2022, race_eth_bucket = "AAPI")$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "AAPI"),
+  sex_race_summarize(year = 2022, race_eth_bucket = "AIAN")$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "AIAN"),
+  sex_race_summarize(year = 2022, race_eth_bucket = "Black")$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Black"),
+  sex_race_summarize(year = 2022, race_eth_bucket = "Hispanic")$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Hispanic"),
+  sex_race_summarize(year = 2022, race_eth_bucket = "Multiracial")$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Multiracial"),
+  sex_race_summarize(year = 2022, race_eth_bucket = "Other")$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "Other"),
+  sex_race_summarize(year = 2022, race_eth_bucket = "White")$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "White"),
   # All Results
-  result$age_sex_all_2012$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "All"),
-  result$age_sex_all_2022$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "All")
+  sex_race_summarize(year = 2012)$data |> mutate(YEAR = 2012, RACE_ETH_bucket = "All"),
+  sex_race_summarize(year = 2022)$data |> mutate(YEAR = 2022, RACE_ETH_bucket = "All")
 )
 
-# ----- Step 8: Save all results ----- #
+# ----- Step 8: Compute one-off facts ----- #
+twenties_2022_cohabit <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2022 & AGE >= 18 & AGE < 30),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("cohabit_bin"),
+  group_by = c("cohabit_bin"),
+  percent_group_by = c(),
+  every_combo = TRUE
+) |>
+  mutate(
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+  ))
+
+twenties_2012_cohabit <- estimate_with_bootstrap_se(
+  data = ipums_relate |> filter(YEAR == 2012 & AGE >= 18 & AGE < 30),
+  f = crosstab_percent,
+  wt_col = "PERWT",
+  repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+  constant = 4/80,
+  se_cols = c("percent"),
+  id_cols = c("cohabit_bin"),
+  group_by = c("cohabit_bin"),
+  percent_group_by = c(),
+  every_combo = TRUE
+) |>
+  mutate(
+    cohabit_bin = factor(
+      as.character(cohabit_bin),
+      levels = names(cohabit_labels),
+      labels = cohabit_labels
+    ))
+
+fast_facts <- list()
+
+fast_facts$twenties_2012_cohabit <- list(
+  desc = "A table showing the fraction of 18 to 29 year olds (inclusive) who live with their parents in 2012.",
+  data = twenties_2012_cohabit
+)
+
+fast_facts$twenties_2022_cohabit <- list(
+  desc = "A table showing the fraction of 18 to 29 year olds (inclusive) who live with their parents in 2022.",
+  data = twenties_2022_cohabit
+)
+# ----- Step 9: Save all results ----- #
 save(result, file = "shiny-app/data.rda")
 save(race_sex_summary, file = "shiny-app/race-sex-summary.rda")
+save(fast_facts, file = "shiny-app/fast-facts.rda")
 
 ###############################
 # Old code that isn't guaranteed to work anymore 
