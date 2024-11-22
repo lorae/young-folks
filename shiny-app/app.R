@@ -16,15 +16,12 @@ stacked_bar_hhstatus <- function(data, title = "Default title") {
   # First, transform data as needed for the plot
   data_for_plot <- data |> 
     mutate(
-      # TODO: turn this into factor at data processing stage
       AGE_bucket = factor(
         AGE_bucket,
         levels = c("Under 16", "16-17", "18-19", "20-21", "22-23", "24-25", "26-27", "28-29", "30+")
       ),
-      # TODO: consider refactoring at data processing stage
       cohabit_bin = forcats::fct_rev(cohabit_bin)
     ) |> 
-    # Calculate the total percentage for each age group (for annotation positioning)
     group_by(AGE_bucket) |> 
     mutate(
       total_parent_dependent = sum(
@@ -62,15 +59,36 @@ stacked_bar_hhstatus <- function(data, title = "Default title") {
   ) |>
     layout(
       barmode = 'stack',
-      title = title,
-      xaxis = list(title = "Age Group"),
-      yaxis = list(title = "Percentage", tickformat = ".0%"),
-      legend = list(title = list(text = " ")),
-      # Add a note at the bottom
+      title = list(
+        text = title,
+        font = list(size = 14),  # Adjust title size
+        x = 0.5,                 # Center title
+        y = 1.05                 # Add space above plot for title
+      ),
+      xaxis = list(
+        title = "Age Group",
+        titlefont = list(size = 12), # Adjust x-axis title size
+        tickfont = list(size = 10)   # Adjust x-axis tick label size
+      ),
+      yaxis = list(
+        title = "Percentage",
+        titlefont = list(size = 12), # Adjust y-axis title size
+        tickformat = ".0%"
+      ),
+      legend = list(
+        title = list(text = " "),
+        font = list(size = 10)
+      ),
+      margin = list(
+        t = 80,  # Top margin for title
+        b = 100, # Bottom margin for x-axis title and annotation
+        l = 50,  # Left margin
+        r = 50   # Right margin
+      ),
       annotations = list(
         list(
-          x = 0.5,  # Center the text horizontally
-          y = -0.1, # Place it below the x-axis
+          x = 0.5,
+          y = -0.2, # Move further below the x-axis
           text = "Values displayed are percentage living with a parent (sum of blue categories).",
           showarrow = FALSE,
           xref = "paper",
@@ -86,7 +104,7 @@ stacked_bar_hhstatus <- function(data, title = "Default title") {
   plot <- plot |> add_annotations(
     data = data_for_plot |> distinct(AGE_bucket, total_parent_dependent, total_all_categories),
     x = ~AGE_bucket,
-    y = ~total_all_categories / 100, # Place above the total height of the bar
+    y = ~total_all_categories / 100 + 0.02, # Offset slightly above the top of the bar
     text = ~scales::percent(total_parent_dependent / 100, accuracy = 0.1),
     xanchor = 'center',
     yanchor = 'bottom',
@@ -96,6 +114,7 @@ stacked_bar_hhstatus <- function(data, title = "Default title") {
   
   return(plot)
 }
+
 
 
 stacked_bar_cohabit <- function(data, title = "Default title") {
@@ -171,18 +190,17 @@ ui <- fluidPage(
             placeholder_constant_2, 
             "percent.",
             "Young adults who live with their parents comprise a large and growing",
-            "fraction of the U.S. population. But who are the people who choose to",
-            "live with their parents, and what factors make a person more likely to",
-            "co-habit?"
+            "fraction of the U.S. population. Who are the people who choose to",
+            "live with their parents, and what factors influence their decision?"
           ),
 
           p(paste(
-            "On one hand, living with one's parents could be a sign of greater financial",
+            "Living with one's parents could be a sign of greater financial",
             "autonomy. Parental cohabitation could be a habit among more privileged young",
             "adults who save money on rent by living on home. Increased cohabitation could",
             "also reflect the growing fraction of Americans in their teens and twenties",
-            "who are attending college.",
-            "On the other hand, living with parents could be a sign of growing financial",
+            "who are attending college [FACT CHECK].",
+            "Living with parents could be a sign of growing financial",
             "distress among young adults. As housing costs rise more rapidly than wages,",
             "young adults may be priced out of rental markets.",
             "Another explanation for the growth in parental cohabitation is cultural:",
@@ -264,7 +282,7 @@ ui <- fluidPage(
                 selected = "2022"
           ))),
           
-        plotlyOutput("ownership_graph", height = "600px"),
+        plotlyOutput("ownership_graph", height = "400px"),
         
         p(paste("It may be more informative to look at the question a different way:",
                 "given a young person's cohabitation status,",
@@ -288,7 +306,7 @@ ui <- fluidPage(
         # Add a row with radio buttons and graph
         fluidRow(
           column(
-            width = 2,
+            width = 3,
             radioButtons(
               "cohabit_status_b", 
               label = "Cohabit status:",
@@ -309,16 +327,18 @@ ui <- fluidPage(
             )
           ),
           column(
-            width = 10,
-            plotlyOutput("ownership_graph_cohabit", height = "600px")
+            width = 9,
+            plotlyOutput("ownership_graph_cohabit", height = "400px")
           )
         ),
         
         tags$h3("Cohabitation by Race and Sex", id = "graph"),
         
         p(paste(
-          "Cohabitation varies greatly by both race and sex. Men tend to live with",
-          "their parents more than women do, and xxxx."
+          "Cohabitation varies greatly by both race and sex. Men live with their",
+          "their parents much more frequently than women do. Hispanics and those",
+          "who self-identify their race as \"other\" tend to cohabit at a higher rate,",
+          "while Whites tend to live with their parents at the lowest rate." 
         )),
         
         fluidRow(
@@ -361,7 +381,14 @@ ui <- fluidPage(
           ))
         ),
 
-        plotlyOutput("race_sex_cohabit", height = "600px")
+        plotlyOutput("race_sex_cohabit", height = "400px"),
+        
+        tags$h3("Cohabitation over time", id = "graph"),
+        
+        p(paste(
+          "The percentage of Americans supporting their parents has grown over the",
+          "past decade, particularly among xxx."
+        ))
 
         )
       )
