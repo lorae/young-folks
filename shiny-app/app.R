@@ -10,6 +10,7 @@ library(plotly)
 # Load necessary data
 load("data.rda")
 load("race-sex-summary.rda")
+load("fast-facts.rda")
 
 # Define a helper function for a stacked bar chart
 stacked_bar_hhstatus <- function(data, title = "Default title") {
@@ -161,8 +162,23 @@ stacked_bar_cohabit <- function(data, title = "Default title") {
 
 
 # Define some constant variables used in the text description of the data
-placeholder_constant_1 <- "1 gazillion"
-placeholder_constant_2 <- 123456
+pct_cohabit_2012 <- fast_facts$twenties_2012_cohabit$data |>
+  filter(cohabit_bin %in% c(
+    "Child depends on parent", 
+    "Both child and parent are dependent", 
+    "Child provides for parent")) |>
+  summarize(total = sum(percent)) |>
+  pull(total) |>
+  round(digits = 1)
+pct_cohabit_2022 <- fast_facts$twenties_2022_cohabit$data |>
+  filter(cohabit_bin %in% c(
+    "Child depends on parent", 
+    "Both child and parent are dependent", 
+    "Child provides for parent")) |>
+  summarize(total = sum(percent)) |>
+  pull(total) |>
+  round(digits = 1)
+
 
 # Define UI
 ui <- fluidPage(
@@ -183,28 +199,52 @@ ui <- fluidPage(
           titlePanel("Changes in Young Adult Cohabitation Patterns, 2012 - 2022"),
           
           tags$h3("Introduction", id = "intro"),
-          p("In 2012,", 
-            placeholder_constant_1,
-            "percent of young adults aged XX - YY lived with their parents. By 2022,",
-            "this figure grew/shrank to",
-            placeholder_constant_2, 
+          p("Young adults who live with their parents comprise a substantial",
+            "fraction of the U.S. population. In 2012,", 
+            pct_cohabit_2012,
+            "percent of young adults aged 18 to 29 lived with their parents. By 2022,",
+            "this figure shrank to",
+            pct_cohabit_2022, 
             "percent.",
-            "Young adults who live with their parents comprise a large and growing",
-            "fraction of the U.S. population. Who are the people who choose to",
-            "live with their parents, and what factors influence their decision?"
+
           ),
+          
+          p(paste(
+            "Tables 1a and 1b show the percentage of young people aged 18-29 who lived",
+            "with their parents in 2012 and 2022. Households where the child lives with",
+            "a parent are further broken down by who is the (presumable) financial provider:",
+            "the child, the parent, or some other individual. [TODO: Link to the methodology",
+            "document for this categorization.]",
+            "The tables show that while the",
+            "total percentage of young adults living with their parents has shrunk in the",
+            "past 10 years, the minority group of children supporting their parents has grown."
+          )),
+          
+          tags$h4("Table 1a: Cohabitation in 2012 among Americans ages 18-29", id = "table1a"),
+          DTOutput("table1a"),
+          tags$h4("Table 1b: Cohabitation in 2022 among Americans ages 18-29", id = "table1b"),
+          DTOutput("table1b"),
 
           p(paste(
-            "Living with one's parents could be a sign of greater financial",
-            "autonomy. Parental cohabitation could be a habit among more privileged young",
-            "adults who save money on rent by living on home. Increased cohabitation could",
+            "It's unclear what social, economic, or demographic factors underlie",
+            "these aggregate trends. A reduction in parental cohabitation could",
+            "be indicative of improving financial lives among young adults, who are better",
+            "equipped to support themselves - and potentially others - earlier in their",
+            "lives. But it also could also indicate an increased burden in an environment",
+            "where housing costs are growing rapidly.",
+            "Reduced cohabitation could",
             "also reflect the growing fraction of Americans in their teens and twenties",
-            "who are attending college [FACT CHECK].",
-            "Living with parents could be a sign of growing financial",
-            "distress among young adults. As housing costs rise more rapidly than wages,",
-            "young adults may be priced out of rental markets.",
-            "Another explanation for the growth in parental cohabitation is cultural:",
-            "There may simply be declining stigma around the practice."
+            "who are attending college [FACT CHECK]. It's also possible that cultural",
+            "norms around parental cohabitation have been changing, making young adults",
+            "more averse to the practice [note from Lorae: As a young adult, I anecdotally don't think this",
+            "is true. I think living with your parents is becoming less stigmatized over time].",
+            "It's also possible that the demographics of the population in the age 18-29",
+            "cohort have changed such that those groups with a lesser tendency to live",
+            "with their parents are growing in size. This is unlikely - as we show in",
+            "section XXX, Hispanic Americans - who are a rapidly growing segment of the",
+            "young U.S. population - tend to live with their parents more than people",
+            "belonging to other races/ethnicities. And White Americans, who comprise a",
+            "shrinking fraction of the U.S. population, tend to cohabit at the lowest rates."
             )),
           
           p(paste(
@@ -226,7 +266,7 @@ ui <- fluidPage(
             "Surveys have shown a growing prevalence of parental cohabitation among young",
             "adults [Cite Pew or other surveys here], but little is known about the",
             "sociodemographic profile of these individuals or the factors driving this",
-            "trend. In this document, we investigate a few key associative questions:"
+            "trend. In this document, we investigate a few key preliminary questions:"
           )),
           
           p(paste("To what extent do these patterns differ by race? By gender? Are",
@@ -397,6 +437,68 @@ ui <- fluidPage(
 
 # Define server
 server <- function(input, output, session) {
+  
+  output$table1a <- renderDT({
+    # Get the critical value for 95% confidence level
+    z_value <- qnorm(0.975)
+    
+    datatable(
+      fast_facts$twenties_2012_cohabit$data |>
+        mutate(
+          lower_ci = round(percent - z_value * se_percent, 2),  # Calculate lower CI
+          upper_ci = round(percent + z_value * se_percent, 2),  # Calculate upper CI
+          percent = paste0(round(percent, 2), "%"),  # Add percentage sign
+          `95% CI` = paste0("(", lower_ci, "%, ", upper_ci, "%)"),  # Format CI
+          `Estimated Population` = scales::comma(weighted_count),  # Format with commas
+          `Number Surveyed` = scales::comma(count)  # Format with commas
+        ) |>
+        select(
+          "Cohabitation Type" = cohabit_bin,
+          `Estimated Population`,
+          `Number Surveyed`,
+          "Percentage" = percent,
+          `95% CI`
+        ),
+      options = list(
+        pageLength = 5,
+        searching = FALSE,
+        lengthChange = FALSE,
+        paging = FALSE,
+        info = FALSE),
+      rownames = FALSE
+    )
+  })
+  
+  output$table1b <- renderDT({
+    # Get the critical value for 95% confidence level
+    z_value <- qnorm(0.975)
+    
+    datatable(
+      fast_facts$twenties_2022_cohabit$data |>
+        mutate(
+          lower_ci = round(percent - z_value * se_percent, 2),  # Calculate lower CI
+          upper_ci = round(percent + z_value * se_percent, 2),  # Calculate upper CI
+          percent = paste0(round(percent, 2), "%"),  # Add percentage sign
+          `95% CI` = paste0("(", lower_ci, "%, ", upper_ci, "%)"),  # Format CI
+          `Estimated Population` = scales::comma(weighted_count),  # Format with commas
+          `Number Surveyed` = scales::comma(count)  # Format with commas
+        ) |>
+        select(
+          "Cohabitation Type" = cohabit_bin,
+          `Estimated Population`,
+          `Number Surveyed`,
+          "Percentage" = percent,
+          `95% CI`
+        ),
+      options = list(
+        pageLength = 5,
+        searching = FALSE,
+        lengthChange = FALSE,
+        paging = FALSE,
+        info = FALSE),
+      rownames = FALSE
+    )
+  })
   
   # Table 1: Render theoretical example table
   output$table1 <- renderDT({
