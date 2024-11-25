@@ -132,7 +132,7 @@ ui <- fluidPage(
                 selected = "2022"
               ))),
           
-          plotlyOutput("ownership_graph", height = "400px"),
+          plotlyOutput("ownership_graph", height = "500px"),
           
           p(paste("It may be more informative to look at the question a different way:",
                   "given a young person's cohabitation status,",
@@ -231,7 +231,7 @@ ui <- fluidPage(
               ))
           ),
           
-          plotlyOutput("race_sex_cohabit", height = "400px"),
+          plotlyOutput("race_sex_cohabit", height = "500px"),
           
           tags$h3("Cohabitation over time", id = "graph"),
           
