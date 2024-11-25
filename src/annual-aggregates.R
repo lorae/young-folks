@@ -425,7 +425,117 @@ fast_facts$twenties_2022_cohabit <- list(
   desc = "A table showing the fraction of 18 to 29 year olds (inclusive) who live with their parents in 2022.",
   data = twenties_2022_cohabit
 )
-# ----- Step 9: Save all results ----- #
+
+
+# ----- Step 9: Calculate annual cohabitant aggregates ----- #
+# Note: This section takes about 30 minutes to run on Della
+# Also note: not my most elegant code. Let's refactor it a little.
+
+# Create a vector of years
+years <- 2012:2023
+
+# Define the function to calculate for a single year
+process_year <- function(year) {
+  ipums_relate |> 
+    filter(YEAR == year & AGE >= 18 & AGE < 30) |> 
+    estimate_with_bootstrap_se(
+      f = crosstab_percent,
+      wt_col = "PERWT",
+      repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+      constant = 4/80,
+      se_cols = c("percent"),
+      id_cols = c("RACE_ETH_bucket", "SEX", "cohabit_bin"),
+      group_by = c("RACE_ETH_bucket", "SEX", "cohabit_bin"),
+      percent_group_by = c(),
+      every_combo = TRUE
+    ) |> 
+    mutate(
+      cohabit_bin = factor(
+        as.character(cohabit_bin),
+        levels = names(cohabit_labels),
+        labels = cohabit_labels
+      ),
+      year = year # Add the year column
+    )
+}
+
+# Apply the function to each year and combine results
+cohabit_sex_race_year <- map_dfr(years, process_year)
+
+process_year <- function(year) {
+  ipums_relate |> 
+    filter(YEAR == year & AGE >= 18 & AGE < 30) |> 
+    estimate_with_bootstrap_se(
+      f = crosstab_percent,
+      wt_col = "PERWT",
+      repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+      constant = 4/80,
+      se_cols = c("percent"),
+      id_cols = c("SEX", "cohabit_bin"),
+      group_by = c("SEX", "cohabit_bin"),
+      percent_group_by = c(),
+      every_combo = TRUE
+    ) |> 
+    mutate(
+      cohabit_bin = factor(
+        as.character(cohabit_bin),
+        levels = names(cohabit_labels),
+        labels = cohabit_labels
+      ),
+      year = year, # Add the year column
+      RACE_ETH_bucket = "All" 
+    )
+}
+# Apply the function to each year and combine results
+cohabit_sex <- map_dfr(years, process_year)
+
+process_year <- function(year) {
+  ipums_relate |> 
+    filter(YEAR == year & AGE >= 18 & AGE < 30) |> 
+    estimate_with_bootstrap_se(
+      f = crosstab_percent,
+      wt_col = "PERWT",
+      repwt_cols = paste0("REPWTP", sprintf("%d", 1:80)),
+      constant = 4/80,
+      se_cols = c("percent"),
+      id_cols = c("RACE_ETH_bucket", "cohabit_bin"),
+      group_by = c("RACE_ETH_bucket", "cohabit_bin"),
+      percent_group_by = c(),
+      every_combo = TRUE
+    ) |> 
+    mutate(
+      cohabit_bin = factor(
+        as.character(cohabit_bin),
+        levels = names(cohabit_labels),
+        labels = cohabit_labels
+      ),
+      year = year, # Add the year column
+      SEX = 3
+    )
+}
+# Apply the function to each year and combine results
+cohabit_race <- map_dfr(years, process_year)
+
+# View the combined results
+print(cohabit_sex_race_year)
+print(cohabit_sex)
+print(cohabit_race)
+
+
+cohabit_over_time <- bind_rows(
+  cohabit_sex_race_year,
+  cohabit_sex,
+  cohabit_race
+) |> 
+  mutate(
+    SEX = factor(
+      as.character(SEX),
+      levels = names(sex_labels),
+      labels = sex_labels
+    ))
+
+# ----- Step 10: Save all results ----- #
+save(cohabit_over_time, file = "shiny-app/cohabit_over_time.rda")
 save(result, file = "shiny-app/data.rda")
 save(race_sex_summary, file = "shiny-app/race-sex-summary.rda")
 save(fast_facts, file = "shiny-app/fast-facts.rda")
