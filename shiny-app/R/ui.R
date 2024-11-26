@@ -272,7 +272,16 @@ ui <- fluidPage(
               plotlyOutput("line_graph", height = "600px")
             )),
           
-          
+          sidebarLayout(
+            sidebarPanel(
+              actionButton("add_series", "Add Series"),  # Button to add a new series
+              uiOutput("series_inputs")                 # Dynamic inputs for Race and Sex
+            ),
+            
+            mainPanel(
+              tableOutput("filtered_data")              # Display the filtered data for debugging
+            )
+          )
           
         )
       )
