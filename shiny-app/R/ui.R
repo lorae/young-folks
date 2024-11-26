@@ -256,16 +256,17 @@ ui <- fluidPage(
                 ),
                 selected = "All"
               ),
-              radioButtons(
-                "sex_selection_d", 
-                label = "Sex:",
-                choices = c(
-                  "Male" = "Male",
-                  "Female" = "Female",
-                  "All" = "All"
-                ),
-                selected = "All"
-              )),
+            ),
+              # radioButtons(
+              #   "sex_selection_d", 
+              #   label = "Sex:",
+              #   choices = c(
+              #     "Male" = "Male",
+              #     "Female" = "Female",
+              #     "All" = "All"
+              #   ),
+              #   selected = "All"
+              # )),
             column(
               width = 9,
               plotlyOutput("line_graph", height = "600px")

@@ -151,7 +151,19 @@ line_cohabit <- function(data, title = "Default title") {
     data = data,
     x = ~year,
     y = ~percent,
+    color = ~SEX,  # Group by SEX to create separate lines
     type = "scatter",
-    mode = "lines+markers"
-  )
+    mode = "lines+markers",
+    hoverinfo = "text",
+    text = ~paste(
+      "Year:", year, "<br>",
+      "Percent:", round(percent, 2), "<br>",
+      "Sex:", SEX
+    )
+  ) |> 
+    layout(
+      title = list(text = title),
+      xaxis = list(title = "Year"),
+      yaxis = list(title = "Percent")
+    )
 }
