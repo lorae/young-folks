@@ -434,7 +434,7 @@ fast_facts$twenties_2022_cohabit <- list(
 years <- 2012:2023
 
 # Common logic for processing data
-process_year <- function(year, id_cols, group_by_cols, extra_columns) {
+process_year <- function(year, id_cols, group_by_cols, percent_group_by_cols, extra_cols) {
   ipums_relate |> 
     filter(YEAR == year & AGE >= 18 & AGE < 30) |> 
     estimate_with_bootstrap_se(
@@ -445,7 +445,7 @@ process_year <- function(year, id_cols, group_by_cols, extra_columns) {
       se_cols = c("percent"),
       id_cols = id_cols,
       group_by = group_by_cols,
-      percent_group_by = c(),
+      percent_group_by = percent_group_by_cols,
       every_combo = TRUE
     ) |> 
     mutate(
@@ -456,7 +456,7 @@ process_year <- function(year, id_cols, group_by_cols, extra_columns) {
       ),
       year = year # Add the year column
     ) |> 
-    mutate(!!!extra_columns) # Add any additional columns dynamically
+    mutate(!!!extra_cols) # Add any additional columns dynamically
 }
 
 # Define configurations for different outputs
@@ -464,28 +464,32 @@ configurations <- list(
   list(
     id_cols = c("RACE_ETH_bucket", "SEX", "cohabit_bin"),
     group_by_cols = c("RACE_ETH_bucket", "SEX", "cohabit_bin"),
-    extra_columns = list()
+    percent_group_by_cols = c("RACE_ETH_bucket", "SEX"),
+    extra_cols = list()
   ),
   list(
     id_cols = c("SEX", "cohabit_bin"),
     group_by_cols = c("SEX", "cohabit_bin"),
-    extra_columns = list(RACE_ETH_bucket = "All")
+    percent_group_by_cols = c("SEX"),
+    extra_cols = list(RACE_ETH_bucket = "All")
   ),
   list(
     id_cols = c("RACE_ETH_bucket", "cohabit_bin"),
     group_by_cols = c("RACE_ETH_bucket", "cohabit_bin"),
-    extra_columns = list(SEX = 3)
+    percent_group_by_cols = c("RACE_ETH_bucket"),
+    extra_cols = list(SEX = 3)
   ),
   list(
     id_cols = c("cohabit_bin"),
     group_by_cols = c("cohabit_bin"),
-    extra_columns = list(SEX = 3, RACE_ETH_bucket = "All")
+    percent_group_by_cols = c(),
+    extra_cols = list(SEX = 3, RACE_ETH_bucket = "All")
   )
 )
 
 # Process each configuration
 results <- map_dfr(configurations, function(config) {
-  map_dfr(years, ~process_year(.x, config$id_cols, config$group_by_cols, config$extra_columns))
+  map_dfr(years, ~process_year(.x, config$id_cols, config$group_by_cols, config$percent_group_by_cols, config$extra_cols))
 })
 
 # Bind and mutate the final dataset
@@ -495,11 +499,10 @@ cohabit_over_time <- results |>
       as.character(SEX),
       levels = names(sex_labels),
       labels = sex_labels
-    )
+    ),
+    lower_95_ci = percent - qnorm(0.975)*se_percent,
+    upper_95_ci = percent + qnorm(0.975)*se_percent
   )
-
-# View results
-print(cohabit_over_time)
 
 # ----- Step 10: Save all results ----- #
 save(result, file = "shiny-app/data.rda")
