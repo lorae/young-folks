@@ -429,7 +429,6 @@ fast_facts$twenties_2022_cohabit <- list(
 
 # ----- Step 9: Calculate annual cohabitant aggregates ----- #
 # Note: This section takes about 30 minutes to run on Della using 20 cores.
-# Also note: not my most elegant code. Let's refactor it a little.
 
 # Create a vector of years
 years <- 2012:2023
@@ -476,6 +475,11 @@ configurations <- list(
     id_cols = c("RACE_ETH_bucket", "cohabit_bin"),
     group_by_cols = c("RACE_ETH_bucket", "cohabit_bin"),
     extra_columns = list(SEX = 3)
+  ),
+  list(
+    id_cols = c("cohabit_bin"),
+    group_by_cols = c("cohabit_bin"),
+    extra_columns = list(SEX = 3, RACE_ETH_bucket = "All")
   )
 )
 
