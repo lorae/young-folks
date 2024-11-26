@@ -170,8 +170,18 @@ server <- function(input, output, session) {
   })
   
   output$line_graph <- renderPlotly({
+    selected_sex <- input$sex_selection_d
+    selected_race <- input$race_selection_d
+    
+    filtered_data <- cohabit_over_time |>
+      filter(
+        cohabit_bin == "Not living with parents" &
+        SEX == selected_sex &
+        RACE_ETH_bucket == selected_race
+      )
+    
     line_cohabit(
-      data = cohabit_over_time,
+      data = filtered_data,
       title = "Test title"
     )
   })

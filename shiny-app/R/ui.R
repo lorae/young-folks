@@ -213,7 +213,7 @@ ui <- fluidPage(
               width = 4,
               radioButtons(
                 "sex_selection_c", 
-                label = "Gender:",
+                label = "Sex:",
                 choices = c(
                   "Male" = "Male",
                   "Female" = "Female",
@@ -238,8 +238,40 @@ ui <- fluidPage(
           p(paste(
             "TODO: add line graph here"
           )),
+          fluidRow(
+            column(
+              width = 3,
+              radioButtons(
+                "race_selection_d",
+                label = "Race / Ethnicity",
+                choices = c(
+                  "Asian American / Pacific Islander" = "AAPI",
+                  "American Indian / Alaska Native" = "AIAN",
+                  "Black" = "Black",
+                  "Hispanic" = "Hispanic",
+                  "Multiracial" = "Multiracial",
+                  "White" = "White",
+                  "Other" = "Other",
+                  "All" = "All"
+                ),
+                selected = "All"
+              ),
+              radioButtons(
+                "sex_selection_d", 
+                label = "Sex:",
+                choices = c(
+                  "Male" = "Male",
+                  "Female" = "Female",
+                  "All" = "All"
+                ),
+                selected = "All"
+              )),
+            column(
+              width = 9,
+              plotlyOutput("line_graph", height = "600px")
+            )),
           
-          plotlyOutput("line_graph", height = "600px")
+          
           
         )
       )
