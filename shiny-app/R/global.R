@@ -4,6 +4,7 @@ library(dplyr)
 library(scales)
 library(ggplot2)
 library(plotly)
+library(shinyWidgets)
 
 source("R/data-viz-tools.R") 
 
