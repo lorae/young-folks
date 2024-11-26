@@ -236,8 +236,10 @@ ui <- fluidPage(
           tags$h3("Cohabitation over time", id = "graph"),
           
           p(paste(
-            "TODO: all line graph here"
-          ))
+            "TODO: add line graph here"
+          )),
+          
+          plotlyOutput("line_graph", height = "600px")
           
         )
       )

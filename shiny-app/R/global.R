@@ -11,6 +11,7 @@ source("R/data-viz-tools.R")
 load("data.rda")
 load("race-sex-summary.rda")
 load("fast-facts.rda")
+load("cohabit_over_time.rda")
 
 # Define some constant variables used in the text description of the data
 pct_cohabit_2012 <<- fast_facts$twenties_2012_cohabit$data |>

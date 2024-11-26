@@ -169,4 +169,11 @@ server <- function(input, output, session) {
     )
   })
   
+  output$line_graph <- renderPlotly({
+    line_cohabit(
+      data = cohabit_over_time,
+      title = "Test title"
+    )
+  })
+
 }

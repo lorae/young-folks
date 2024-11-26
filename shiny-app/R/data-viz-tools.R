@@ -145,3 +145,16 @@ stacked_bar_cohabit <- function(data, title = "Default title") {
       legend = list(title = list(text = " "))
     )
 }
+
+line_cohabit <- function(data, title = "Default title") {
+  plot_ly(
+    data = data |> filter(
+      cohabit_bin == "Not living with parents" &
+      RACE_ETH_bucket == "All" &
+      SEX == "All"),
+    x = ~year,
+    y = ~percent,
+    type = "scatter",
+    mode = "lines+markets"
+  )
+}
