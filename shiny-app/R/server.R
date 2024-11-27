@@ -186,7 +186,7 @@ server <- function(input, output, session) {
   })
   
   # Define race categories
-  race_choices <- c(
+  line_names <- c(
     "Line 1" = "AAPI",
     "Line 2" = "AIAN",
     "Line 3" = "Black",
@@ -199,26 +199,64 @@ server <- function(input, output, session) {
   
   output$checkbox_with_dropdowns <- renderUI({
     # Generate a row with a checkbox and a dropdown for each race
-    rows <- lapply(names(race_choices), function(name) {
+    rows <- lapply(names(line_names), function(name) {
       fluidRow(
         column(
-          width = 6,
+          width = 2,
           checkboxInput(
-            inputId = paste0("checkbox_", race_choices[name]),
+            inputId = paste0("checkbox_", line_names[name]),
             label = name,
             value = FALSE
           )
         ),
         column(
-          width = 6,
+          width = 2,
           selectInput(
-            inputId = paste0("dropdown_", race_choices[name]),
+            inputId = paste0("dropdown_race_", line_names[name]),
             label = NULL,  # No label for the dropdown
-            choices = c("Option 1", "Option 2", "Option 3"),  # Customize options as needed
-            selected = "Option 1"
+            choices = c(
+              "All races", 
+              "AAPI", 
+              "AIAN",
+              "Black",
+              "Hispanic",
+              "Multiracial",
+              "White",
+              "Other"
+              ),
+            selected = "All races"
+          )
+        ),
+        column(
+          width = 2,
+          selectInput(
+            inputId = paste0("dropdown_sex_", line_names[name]),
+            label = NULL,
+            choices = c(
+              "All sexes",
+              "Males",
+              "Females"
+            ),
+            selected = "All sexes"
+          )
+        ),
+        column(
+          width = 4,
+          selectInput(
+            inputId = paste0("dropdown_cohabit_", line_names[name]),
+            label = NULL,
+            choices = c(
+              "Not living with parents",
+              "Child provides for parent",
+              "Both child and parent are dependent",
+              "Child depends on parent",
+              "Living in institution"
+            ),
+            selected = "Not living with parents"
           )
         )
-      )
+
+        )
     })
     do.call(tagList, rows)  # Combine all rows into a single output
   })
