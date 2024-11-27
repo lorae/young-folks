@@ -169,22 +169,6 @@ server <- function(input, output, session) {
     )
   })
   
-  output$line_graph <- renderPlotly({
-    #selected_sex <- input$sex_selection_d
-    selected_race <- "Black"
-    
-    filtered_data <- cohabit_over_time |>
-      filter(
-        cohabit_bin == "Not living with parents" &
-        RACE_ETH_bucket == selected_race
-      )
-    
-    line_cohabit(
-      data = filtered_data,
-      title = "Test title"
-    )
-  })
-  
   # Line names
   line_names <- c(
     "Line 1" = "AAPI",
@@ -215,16 +199,16 @@ server <- function(input, output, session) {
             inputId = paste0("dropdown_race_", line_names[name]),
             label = NULL,  # No label for the dropdown
             choices = c(
-              "All races", 
-              "AAPI", 
-              "AIAN",
-              "Black",
-              "Hispanic",
-              "Multiracial",
-              "White",
-              "Other"
+              "All races" = "All", 
+              "Asian American / Pacific Islander" = "AAPI", 
+              "American Indian / Alaska Native" = "AIAN",
+              "Black or African American" = "Black",
+              "Hispanic or Latino" = "Hispanic",
+              "Multiracial" = "Multiracial",
+              "White" = "White",
+              "Other" = "Other"
               ),
-            selected = "All races"
+            selected = "All"
           )
         ),
         column(
@@ -233,11 +217,11 @@ server <- function(input, output, session) {
             inputId = paste0("dropdown_sex_", line_names[name]),
             label = NULL,
             choices = c(
-              "All sexes",
-              "Males",
-              "Females"
+              "All sexes" = "All",
+              "Men" = "Male",
+              "Women" = "Female"
             ),
-            selected = "All sexes"
+            selected = "All"
           )
         ),
         column(
@@ -282,6 +266,44 @@ server <- function(input, output, session) {
     tagList(lapply(debug_text, function(line) {
       p(line)
     }))
+  })
+  
+  filtered_data_for_line <- reactive({
+    filtered <- data.frame()
+    
+    for (name in names(line_names)) {
+      if (input[[paste0("checkbox_", line_names[name])]]) {
+        selected_race <- input[[paste0("dropdown_race_", line_names[name])]]
+        selected_sex <- input[[paste0("dropdown_sex_", line_names[name])]]
+        selected_cohabit <- input[[paste0("dropdown_cohabit_", line_names[name])]]
+        
+        filtered_line <- cohabit_over_time %>%
+          filter(
+            RACE_ETH_bucket == selected_race,
+            SEX == selected_sex,
+            cohabit_bin == selected_cohabit
+          ) %>%
+          mutate(id = name)
+        
+        filtered <- bind_rows(filtered, filtered_line)
+      }
+    }
+    
+    filtered
+  })
+  
+  output$line_graph <- renderPlotly({
+    req(filtered_data_for_line())  # Ensure the filtered data is available
+    
+    line_cohabit(
+      data = filtered_data_for_line(),
+      title = "Test Title"
+    )
+  })
+  
+  output$debug_filtered_table <- renderTable({
+    req(filtered_data_for_line())  # Ensure data is available
+    filtered_data_for_line()       # Display the filtered data
   })
 
 }
