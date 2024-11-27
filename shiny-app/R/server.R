@@ -183,14 +183,15 @@ server <- function(input, output, session) {
   
   output$checkbox_with_dropdowns <- renderUI({
     # Generate a row with a checkbox and a dropdown for each race
-    rows <- lapply(names(line_names), function(name) {
+    rows <- lapply(seq_along(names(line_names)), function(i) {
+      name <- names(line_names)[i]
       fluidRow(
         column(
           width = 2,
           checkboxInput(
             inputId = paste0("checkbox_", line_names[name]),
             label = name,
-            value = FALSE
+            value = i == 1  # Automatically select the first checkbox
           )
         ),
         column(
@@ -301,9 +302,4 @@ server <- function(input, output, session) {
     )
   })
   
-  output$debug_filtered_table <- renderTable({
-    req(filtered_data_for_line())  # Ensure data is available
-    filtered_data_for_line()       # Display the filtered data
-  })
-
 }

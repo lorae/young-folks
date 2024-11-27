@@ -147,7 +147,8 @@ stacked_bar_cohabit <- function(data, title = "Default title") {
 }
 
 line_cohabit <- function(data, title = "Default title") {
-  plot_ly(
+  # Base plot with lines and markers
+  p <- plot_ly(
     data = data,
     x = ~year,
     y = ~percent,
@@ -160,10 +161,26 @@ line_cohabit <- function(data, title = "Default title") {
       "Percent:", round(percent, 2), "<br>",
       "Sex:", SEX
     )
-  ) |> 
-    layout(
-      title = list(text = title),
-      xaxis = list(title = "Year"),
-      yaxis = list(title = "Percent")
-    )
+  )
+  
+  # Add confidence interval ribbons
+  p <- p |> add_ribbons(
+    data = data,
+    x = ~year,
+    ymin = ~lower_95_ci,
+    ymax = ~upper_95_ci,
+    color = ~id,
+    opacity = 0.2,  # Translucent grey highlight
+    line = list(width = 0),  # No border for ribbons
+    hoverinfo = "none"  # Disable hover for ribbons
+  )
+  
+  # Add layout
+  p <- p |> layout(
+    title = list(text = title),
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Percent")
+  )
+  
+  return(p)
 }
