@@ -240,6 +240,7 @@ ui <- fluidPage(
           )),
 
           uiOutput("checkbox_with_dropdowns"),
+          uiOutput("debug_output"),  # Debugging text
           plotlyOutput("line_graph", height = "600px")
 
         )

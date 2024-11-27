@@ -185,7 +185,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # Define race categories
+  # Line names
   line_names <- c(
     "Line 1" = "AAPI",
     "Line 2" = "AIAN",
@@ -259,6 +259,29 @@ server <- function(input, output, session) {
         )
     })
     do.call(tagList, rows)  # Combine all rows into a single output
+  })
+  
+  output$debug_output <- renderUI({
+    # Iterate over line_names to extract selected options
+    debug_text <- lapply(names(line_names), function(name) {
+      if (input[[paste0("checkbox_", line_names[name])]]) {
+        # Get selected values from dropdowns
+        selected_race <- input[[paste0("dropdown_race_", line_names[name])]]
+        selected_sex <- input[[paste0("dropdown_sex_", line_names[name])]]
+        selected_cohabit <- input[[paste0("dropdown_cohabit_", line_names[name])]]
+        
+        # Create a line of text for the selected line
+        paste0(name, ": ", selected_race, ", ", selected_sex, ", ", selected_cohabit)
+      }
+    })
+    
+    # Remove NULL entries (unchecked checkboxes)
+    debug_text <- debug_text[!sapply(debug_text, is.null)]
+    
+    # Render the debugging text as a list of paragraphs
+    tagList(lapply(debug_text, function(line) {
+      p(line)
+    }))
   })
 
 }
