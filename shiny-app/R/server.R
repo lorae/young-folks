@@ -171,7 +171,7 @@ server <- function(input, output, session) {
   
   output$line_graph <- renderPlotly({
     #selected_sex <- input$sex_selection_d
-    selected_race <- input$race_selection_d
+    selected_race <- "Black"
     
     filtered_data <- cohabit_over_time |>
       filter(
@@ -183,6 +183,44 @@ server <- function(input, output, session) {
       data = filtered_data,
       title = "Test title"
     )
+  })
+  
+  # Define race categories
+  race_choices <- c(
+    "Line 1" = "AAPI",
+    "Line 2" = "AIAN",
+    "Line 3" = "Black",
+    "Line 4" = "Hispanic",
+    "Line 5" = "Multiracial",
+    "Line 6" = "White",
+    "Line 7" = "Other",
+    "Line 8" = "All"
+  )
+  
+  output$checkbox_with_dropdowns <- renderUI({
+    # Generate a row with a checkbox and a dropdown for each race
+    rows <- lapply(names(race_choices), function(name) {
+      fluidRow(
+        column(
+          width = 6,
+          checkboxInput(
+            inputId = paste0("checkbox_", race_choices[name]),
+            label = name,
+            value = FALSE
+          )
+        ),
+        column(
+          width = 6,
+          selectInput(
+            inputId = paste0("dropdown_", race_choices[name]),
+            label = NULL,  # No label for the dropdown
+            choices = c("Option 1", "Option 2", "Option 3"),  # Customize options as needed
+            selected = "Option 1"
+          )
+        )
+      )
+    })
+    do.call(tagList, rows)  # Combine all rows into a single output
   })
 
 }
