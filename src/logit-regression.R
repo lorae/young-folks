@@ -24,23 +24,28 @@ ipums_relate <- tbl(con, "ipums_relationships")
 # ----- Step 3: Some data quality pre-checks ----- #
 # GRADEATT: grade level attending. This variable is 0 if the individual is not
 # currently in school, and encoded based on the level of school they're in. I'd be
-# surprised to see at GRADEATT less than 5 (which indicates grades 9-12). In 2022,
-# it appears that there were only 500 respondents who were currently in school, and 
-# those folks were in grades 5 through 8.
-ipums_relate |> filter(YEAR == 2022) |> filter(AGE >= 18) |> count(GRADEATT)
+# surprised to see at GRADEATT less than 5 (which indicates grades 9-12) among
+# 18+ year-olds. In 2022, it appears that there were only 500 respondents who were 
+# encoded at less than high school, and all 500 of those observations were individuals
+# in grades 5 through 8.
+# This variable appears like it's encoded reasonably.
+ipums_relate |> filter(YEAR == 2022 & AGE >= 18) |> count(GRADEATT)
 
-# EDUC: educational attainment. 
-ipums_relate |> filter(YEAR == 2022) |> filter(AGE >= 18) |> count(EDUC) |> print(n = 100)
+# EDUC: educational attainment. I am surprised to see such a large number of over-18s
+# who have no educational attainment (0). 
+ipums_relate |> filter(YEAR == 2022 & AGE >= 18) |> count(EDUC) |> print(n = 100)
 
 # Disabilites: 
-ipums_relate |> count(DIFFREM) # cognitive. Note that the NA values are for individuals < age 5
-ipums_relate |> count(DIFFPHYS) # physical. Note that the NA values are for individuals < age 5
-ipums_relate |> count(DIFFMOB) # independent living. Note that the NA values are for individuals < age 16
-ipums_relate |> count(DIFFCARE) # self-care (dressing/bathing). Note that the NA values are for individuals < age 5
-ipums_relate |> count(DIFFSENS) # hearing or vision. All individuals.
+ipums_relate |> count(DIFFREM) # cognitive. Note that the NA (0) values are for individuals < age 5
+ipums_relate |> count(DIFFPHYS) # physical. Note that the NA (0) values are for individuals < age 5
+ipums_relate |> count(DIFFMOB) # independent living. Note that the NA (0) values are for individuals < age 16
+ipums_relate |> count(DIFFCARE) # self-care (dressing/bathing). Note that the NA (0) values are for individuals < age 5
+ipums_relate |> count(DIFFSENS) # hearing or vision. All individuals: Note that there are no NA values.
 
 
 # ----- Step 4: Prepare variables for regression ---- #
+# The ipums_for_logit data frame will be a data frame with added columns that are
+# encoded in a binary fashion for use in a logit model.
 ipums_for_logit <- ipums_relate |>
   mutate(
     in_school = GRADEATT != 0, # TRUE if individual currently in school
@@ -54,7 +59,7 @@ ipums_for_logit <- ipums_relate |>
     is_hispanic = (RACE_ETH_bucket == "Hispanic"),
     is_multiracial = (RACE_ETH_bucket == "Multiracial"),
     is_otherrace = (RACE_ETH_bucket == "Other"),
-    # white is the excluded race category
+    # @hite is the excluded race category to avoid multicollinearity issues
     is_married = (MARST %in% c(1, 2)), # TRUE if married
     native_born = (BPL < 100), # TRUE if born in the United States
     dis_cognitive = (DIFFREM == 2), # TRUE if cognitive disability
@@ -64,49 +69,62 @@ ipums_for_logit <- ipums_relate |>
     dis_hearingvision = (DIFFSENS == 2), # TRUE if vision or hearing disability
     # Outcome variables
     cohabit = cohabit_bin %in% c(1, 2, 3), # TRUE if lives with parent
-    cohabit_dependent = (cohabit_bin == 3),
-    cohabit_provider = (cohabit_bin == 1),
-    cohabit_not_provider = cohabit_bin %in% c(2,3)
+    cohabit_dependent = (cohabit_bin == 3), # TRUE if lives with and depends on parent
+    cohabit_not_provider = cohabit_bin %in% c(2,3), # TRUE if lives with and does not provide support to parent
+    cohabit_provider = (cohabit_bin == 1) # TRUE if lives with and provides financial support to parent
     )
 
-# Some more sanity checks
+# ----- Step 5: Run some more sanity checks ----- #
+# Note that these are crude estimates because they don't account for the needed
+# weights to make the numbers representative of the population (PERWT). These simple
+# calculations check that there aren't any glaring issues with the data.
+
+# Function which takes a summary TRUE-FALSE table and outputs what proportion of 
+# observations are true. Assumes col 1 contains TRUE and FALSE only.
+prop_true <- function(tf_table) {
+  
+  # using base R because the name of the first column varies
+  num_true <- tf_table[tf_table[[1]] == TRUE, "n"] |>
+    as.numeric()
+  num_false <- tf_table[tf_table[[1]] == FALSE, "n"] |>
+    as.numeric()
+
+  prop_true <- num_true / (num_true + num_false)
+  
+  return(prop_true)
+  }
+
 # Fraction of over 25 year olds in the US in 2022 with a high school diploma
-hs_dipl_table <- ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25) |> count(hs_diploma) |> collect()
-with_dipl <- hs_dipl_table |> filter(hs_diploma == TRUE)|> pull(n)
-wo_dipl <- hs_dipl_table |> filter(hs_diploma == FALSE)|> pull(n)
-with_dipl / (with_dipl + wo_dipl)
+ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25) |> count(hs_diploma) |> collect() |> prop_true()
 
 # Fraction of over 25 year olds in the US in 2022 with a 4-year bachelor's diploma
-bach_dipl_table <- ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25) |> count(bach_diploma) |> collect()
-with_dipl <- bach_dipl_table |> filter(bach_diploma == TRUE) |> pull(n)
-wo_dipl <- bach_dipl_table |> filter(bach_diploma == FALSE)|> pull(n)
-with_dipl / (with_dipl + wo_dipl)
+ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25) |> count(bach_diploma) |> collect() |> prop_true()
 
 # Fraction of 18 - 65 year old population in 2022 that is employed
-ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 65) |> count(is_emp)
+ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 65) |> count(is_emp) |> collect() |> prop_true()
 
 # Race
-ipums_for_logit |> count(is_aapi)
-ipums_for_logit |> count(is_aian)
-ipums_for_logit |> count(is_black)
-ipums_for_logit |> count(is_hispanic)
-ipums_for_logit |> count(is_multiracial)
-ipums_for_logit |> count(is_otherrace)
+ipums_for_logit |> filter(YEAR == 2022) |> count(is_aapi) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(is_aian) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(is_black) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(is_hispanic) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(is_multiracial) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(is_otherrace) |> collect() |> prop_true()
 
 # Married
-ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25) |> count(is_married)
+ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25) |> count(is_married) |> collect() |> prop_true()
 
 # Native born
-ipums_for_logit |> filter(YEAR == 2022) |> count(native_born)
+ipums_for_logit |> filter(YEAR == 2022) |> count(native_born) |> collect() |> prop_true()
 
 # Disability
-ipums_for_logit |> count(dis_cognitive)
-ipums_for_logit |> count(dis_physical)
-ipums_for_logit |> count(dis_independent)
-ipums_for_logit |> count(dis_selfcare)
-ipums_for_logit |> count(dis_hearingvision)
+ipums_for_logit |> filter(YEAR == 2022) |> count(dis_cognitive) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(dis_physical) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(dis_independent) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(dis_selfcare) |> collect() |> prop_true()
+ipums_for_logit |> filter(YEAR == 2022) |> count(dis_hearingvision) |> collect() |> prop_true()
 
-# ----- Step 4: Preliminary logit regression on 2022 data ----- #
+# ----- Step 6: Tun logit regressions on 2022 data ----- #
 
 # MODEL 1: 2022, ages 18-40 (not in institution), living with parent
 logit01 <- glm(cohabit ~ 
@@ -130,7 +148,8 @@ logit01 <- glm(cohabit ~
                 dis_selfcare +
                 dis_hearingvision, 
               data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 40 & cohabit_bin != 9), 
-              family = "binomial"
+              family = "binomial",
+              weights = PERWT
 )
 
 # MODEL 1a: 2022, ages 18-24 (not in institution), living with parent
@@ -155,8 +174,10 @@ logit01a <- glm(cohabit ~
                 dis_selfcare +
                 dis_hearingvision, 
               data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 24 & cohabit_bin != 9), 
-              family = "binomial"
+              family = "binomial",
+              weights = PERWT
 )
+# I have a complete separation problem here.
 
 # MODEL 1b: 2022, ages 25-40 (not in institution), living with parent
 logit01b <- glm(cohabit ~ 
@@ -344,3 +365,7 @@ ipums_for_cov <- ipums_for_logit |>
   collect()
 
 cov_matrix <- cor(ipums_for_cov, y = NULL, use = "everything", method = "pearson")
+
+# ----- Step 7: Save results for use in Shiny app ----- #
+# code here
+
