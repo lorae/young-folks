@@ -63,8 +63,10 @@ ipums_for_logit <- ipums_relate |>
     dis_selfcare = (DIFFCARE == 2), # TRUE if self-care disability
     dis_hearingvision = (DIFFSENS == 2), # TRUE if vision or hearing disability
     # Outcome variables
-    cohabit_parent = cohabit_bin %in% c(1, 2, 3),
-    cohabit_provide_parent = (cohabit_bin == 1)
+    cohabit = cohabit_bin %in% c(1, 2, 3), # TRUE if lives with parent
+    cohabit_dependent = (cohabit_bin == 3),
+    cohabit_provider = (cohabit_bin == 1),
+    cohabit_not_provider = cohabit_bin %in% c(2,3)
     )
 
 # Some more sanity checks
@@ -105,8 +107,9 @@ ipums_for_logit |> count(dis_selfcare)
 ipums_for_logit |> count(dis_hearingvision)
 
 # ----- Step 4: Preliminary logit regression on 2022 data ----- #
-model1 <- glm(cohabit_parent ~ is_female, data = ipums_for_logit |> filter(YEAR == 2022), family = "binomial")
-model2 <- glm(cohabit_parent ~ 
+
+# MODEL 1: 2022, ages 18-40 (not in institution), living with parent
+logit01 <- glm(cohabit ~ 
                 in_school + 
                 hs_diploma +
                 bach_diploma +
@@ -126,17 +129,218 @@ model2 <- glm(cohabit_parent ~
                 dis_independent +
                 dis_selfcare +
                 dis_hearingvision, 
-              data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 40), 
+              data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 40 & cohabit_bin != 9), 
+              family = "binomial"
+)
+
+# MODEL 1a: 2022, ages 18-24 (not in institution), living with parent
+logit01a <- glm(cohabit ~ 
+                in_school + 
+                hs_diploma +
+                bach_diploma +
+                is_emp +
+                is_female +
+                AGE +
+                is_aapi +
+                is_aian +
+                is_black +
+                is_hispanic +
+                is_multiracial +
+                is_otherrace +
+                is_married +
+                native_born +
+                dis_cognitive +
+                dis_physical +
+                dis_independent +
+                dis_selfcare +
+                dis_hearingvision, 
+              data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 24 & cohabit_bin != 9), 
+              family = "binomial"
+)
+
+# MODEL 1b: 2022, ages 25-40 (not in institution), living with parent
+logit01b <- glm(cohabit ~ 
+                in_school + 
+                hs_diploma +
+                bach_diploma +
+                is_emp +
+                is_female +
+                AGE +
+                is_aapi +
+                is_aian +
+                is_black +
+                is_hispanic +
+                is_multiracial +
+                is_otherrace +
+                is_married +
+                native_born +
+                dis_cognitive +
+                dis_physical +
+                dis_independent +
+                dis_selfcare +
+                dis_hearingvision, 
+              data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25 & AGE <= 40 & cohabit_bin != 9), 
               family = "binomial"
               )
 
-# Extract the summary
-model_summary <- summary(model2)
+# MODEL 2: 2022, ages 18-40 (not in institution), not supporting the parent
+logit02 <- glm(cohabit_not_provider ~ 
+                in_school + 
+                hs_diploma +
+                bach_diploma +
+                is_emp +
+                is_female +
+                AGE +
+                is_aapi +
+                is_aian +
+                is_black +
+                is_hispanic +
+                is_multiracial +
+                is_otherrace +
+                is_married +
+                native_born +
+                dis_cognitive +
+                dis_physical +
+                dis_independent +
+                dis_selfcare +
+                dis_hearingvision, 
+              data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 40 & cohabit_bin != 9), 
+              family = "binomial"
+)
 
-# Convert coefficient summary to a data frame
-coefs <- as.data.frame(model_summary$coefficients)
+# MODEL 2a: 2022, ages 18-24 (not in institution), not supporting the parent
+logit02a <- glm(cohabit_not_provider ~ 
+                 in_school + 
+                 hs_diploma +
+                 bach_diploma +
+                 is_emp +
+                 is_female +
+                 AGE +
+                 is_aapi +
+                 is_aian +
+                 is_black +
+                 is_hispanic +
+                 is_multiracial +
+                 is_otherrace +
+                 is_married +
+                 native_born +
+                 dis_cognitive +
+                 dis_physical +
+                 dis_independent +
+                 dis_selfcare +
+                 dis_hearingvision, 
+               data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 24 & cohabit_bin != 9), 
+               family = "binomial"
+)
 
-# Optional: Add an odds ratio column by exponentiating the estimate
-coefs$OddsRatio <- exp(coefs$Estimate)
+# MODEL 2: 2022, ages 25-40 (not in institution), not supporting the parent
+logit02b <- glm(cohabit_not_provider ~ 
+                 in_school + 
+                 hs_diploma +
+                 bach_diploma +
+                 is_emp +
+                 is_female +
+                 AGE +
+                 is_aapi +
+                 is_aian +
+                 is_black +
+                 is_hispanic +
+                 is_multiracial +
+                 is_otherrace +
+                 is_married +
+                 native_born +
+                 dis_cognitive +
+                 dis_physical +
+                 dis_independent +
+                 dis_selfcare +
+                 dis_hearingvision, 
+               data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25 & AGE <= 40 & cohabit_bin != 9), 
+               family = "binomial"
+)
 
-coefs <- coefs |> arrange(Estimate)
+# MODEL 3: 2022, ages 18-40 (not in institution), supporting the parent
+logit03 <- glm(cohabit_provider ~ 
+                 in_school + 
+                 hs_diploma +
+                 bach_diploma +
+                 is_emp +
+                 is_female +
+                 AGE +
+                 is_aapi +
+                 is_aian +
+                 is_black +
+                 is_hispanic +
+                 is_multiracial +
+                 is_otherrace +
+                 is_married +
+                 native_born +
+                 dis_cognitive +
+                 dis_physical +
+                 dis_independent +
+                 dis_selfcare +
+                 dis_hearingvision, 
+               data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 40 & cohabit_bin != 9), 
+               family = "binomial"
+)
+
+# MODEL 3a: 2022, ages 18-24 (not in institution), supporting the parent
+logit03a <- glm(cohabit_provider ~ 
+                  in_school + 
+                  hs_diploma +
+                  bach_diploma +
+                  is_emp +
+                  is_female +
+                  AGE +
+                  is_aapi +
+                  is_aian +
+                  is_black +
+                  is_hispanic +
+                  is_multiracial +
+                  is_otherrace +
+                  is_married +
+                  native_born +
+                  dis_cognitive +
+                  dis_physical +
+                  dis_independent +
+                  dis_selfcare +
+                  dis_hearingvision, 
+                data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 18 & AGE <= 24 & cohabit_bin != 9), 
+                family = "binomial"
+)
+
+# MODEL 3: 2022, ages 25-40 (not in institution), not supporting the parent
+logit03b <- glm(cohabit_provider ~ 
+                  in_school + 
+                  hs_diploma +
+                  bach_diploma +
+                  is_emp +
+                  is_female +
+                  AGE +
+                  is_aapi +
+                  is_aian +
+                  is_black +
+                  is_hispanic +
+                  is_multiracial +
+                  is_otherrace +
+                  is_married +
+                  native_born +
+                  dis_cognitive +
+                  dis_physical +
+                  dis_independent +
+                  dis_selfcare +
+                  dis_hearingvision, 
+                data = ipums_for_logit |> filter(YEAR == 2022 & AGE >= 25 & AGE <= 40 & cohabit_bin != 9), 
+                family = "binomial"
+)
+
+# create a correlation matrix between the factors at play (except for age)
+ipums_for_cov <- ipums_for_logit |> 
+  filter(YEAR == 2022 & AGE >= 18 & AGE <= 40 & cohabit_bin != 9) |>
+  select(
+    in_school, hs_diploma, bach_diploma, is_emp, is_female, is_aapi, is_aian,
+    is_black, is_hispanic, is_multiracial, is_otherrace, is_married, native_born,
+    dis_cognitive, dis_physical, dis_independent, dis_selfcare, dis_hearingvision
+  ) |>
+  collect()
+
+cov_matrix <- cor(ipums_for_cov, y = NULL, use = "everything", method = "pearson")
